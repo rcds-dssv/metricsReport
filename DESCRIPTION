@@ -10,4 +10,5 @@ License: N/A
 Encoding: UTF-8
 LazyData: true
 Imports: 
-    httr
+    httr,
+    readxl
