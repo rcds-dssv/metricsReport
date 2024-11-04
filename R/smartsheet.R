@@ -1,17 +1,13 @@
 # get smartsheet token
+
 get_ss_token <- function(env_file = NULL) {
-  token <- Sys.getenv("SMARTSHEET_TOKEN")
-  if (token == "" && !is.null(env_file)) {
-    readRenviron(env_file)
-    token <- Sys.getenv("SMARTSHEET_TOKEN")
-  }
-  return(token)
+  return(get_env_var("SMARTSHEET_TOKEN", env_file))
 }
 
 get_sheet_id <- function(name = NULL) {
   sheets <- c(
     "consults" = "6556636794906500",
-    "workshops" = "6022520752105348",
+    "workshops" = "564352335695748",
     "workshop_registrations" = "5611139475918724"
   )
 
@@ -25,7 +21,7 @@ get_sheet_id <- function(name = NULL) {
   return(NULL)
 }
 
-
+#' @export
 import_smartsheet <- function(
   sheet_id = NULL, sheet_name = NULL,
   out_file = "tmp.xlsx", rm_outfile = FALSE, env_file = ".env",

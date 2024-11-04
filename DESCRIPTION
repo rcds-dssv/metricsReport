@@ -10,5 +10,10 @@ License: N/A
 Encoding: UTF-8
 LazyData: true
 Imports: 
+    DBI,
+    dplyr,
     httr,
-    readxl
+    magrittr,
+    readxl,
+    RPostgres
+RoxygenNote: 7.3.2
