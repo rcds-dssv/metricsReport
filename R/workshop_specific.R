@@ -131,7 +131,7 @@ set_topic <- function(d, topic_categories, category_order = NULL, blank_category
 #' @export
 group_by_quarter <- function(d) {
   d %>%
-    dplyr::group_by(.data[["cal_year_"]], .data[["cal_quarter_"]], .add = TRUE)
+    dplyr::group_by(.data[["quarter_name_"]], .add = TRUE)
 }
 
 #' @importFrom rlang .data
