@@ -20,7 +20,7 @@ read_workshop_data <- function(con) {
       git, globus, gpu, julia, matlab, python, quest, r, sql, statistics,
       visualization, subtopic_other, subtopic_other_text,
       date_, cal_year_, cal_quarter_, fis_year_, fis_quarter_,
-      quarter_named_
+      quarter_name_
     )
 }
 
