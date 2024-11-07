@@ -56,7 +56,7 @@ reorder_quarters <- function(d) {
 
   d %>%
     dplyr::mutate(
-      quarter_named_ = factor(quarter_names[quarters], levels = quarter_names)
+      quarter_name_ = factor(quarter_names[quarters], levels = quarter_names)
     )
 }
 
