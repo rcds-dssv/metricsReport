@@ -6,6 +6,9 @@
 \usage{
 get_metrics_db_conn(env_file = ".env")
 }
+\arguments{
+\item{env_file}{path to environment file containing keys}
+}
 \description{
 Connect to Metrics Database
 }

@@ -1,5 +1,7 @@
 #' Connect to Metrics Database
 #'
+#' @param env_file path to environment file containing keys
+#'
 #' @export
 get_metrics_db_conn <- function(env_file = ".env") {
   db_user <- get_env_var("DB_USERNAME", env_file = env_file)

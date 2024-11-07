@@ -1,6 +1,6 @@
 Package: metricsReport
 Type: Package
-Title: R package used for reporting metrics for RCDS.
+Title: R package used for reporting metrics for RCDS
 Version: 0.0.99
 Author: John Lee
 Maintainer: The package maintainer <jshlee@northwestern.edu>
@@ -15,5 +15,8 @@ Imports:
     httr,
     magrittr,
     readxl,
-    RPostgres
+    RPostgres,
+    lubridate,
+    stringr,
+    rlang
 RoxygenNote: 7.3.2

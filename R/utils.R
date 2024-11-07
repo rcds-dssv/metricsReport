@@ -41,23 +41,49 @@ all_shcools <- function() {
   ))
 }
 
+reorder_quarters <- function(d) {
+  quarter_order <- 2010:2030 %>%
+    purrr::map(~ paste0(.x, " Q", 1:4), ) %>%
+    unlist()
+  quarter_names <- 2010:2030 %>%
+    purrr::map(~ paste(c("Winter", "Spring", "Summer", "Fall"), .x)) %>%
+    unlist()
+  names(quarter_names) <- quarter_order
+
+  quarters <- paste0(d$cal_year_, " Q", d$cal_quarter_)
+  i <- match(unique(quarters), quarter_order)
+  quarter_names <- quarter_names[min(i):max(i)]
+
+  d %>%
+    dplyr::mutate(
+      quarter_named_ = factor(quarter_names[quarters], levels = quarter_names)
+    )
+}
+
+#' @importFrom rlang .data
 #' @export
 add_year_info <- function(d, date_col) {
+  # combine all combination of year and quarter in order
+
   d %>%
     dplyr::mutate(
       date_ = {{ date_col }},
-      cal_year_ = lubridate::year(date_),
-      cal_quarter_ = lubridate::quarter(date_),
-      fis_year_ = cal_year_ + ifelse(cal_quarter_ <= 2, 0, 1)
-    )
+      cal_year_ = lubridate::year(.data[["date_"]]),
+      cal_quarter_ = lubridate::quarter(.data[["date_"]]),
+      fis_year_ = .data[["cal_year_"]] + ifelse(.data[["cal_quarter_"]] <= 3, 0, 1),
+      fis_quarter_ = c(2,3,4,1)[.data[["cal_quarter_"]]]
+    ) %>%
+    reorder_quarters()
 }
 
 #' @export
 filter_by_date <- function(d, from_date="2010-01-01", to_date="2099-12-31") {
   d %>%
-    dplyr::filter(date_ >= lubridate::ymd(from_date), date_ <= lubridate::ymd(to_date))
+    dplyr::filter(.data[["date_"]] >= lubridate::ymd(from_date), .data[["date_"]] <= lubridate::ymd(to_date)) %>%
+    reorder_quarters()
 }
 
+#' @importFrom rlang .data
 #' @export
 filter_by_quarter <- function(d, from_quarter, to_quarter) {
   yq1 <- as.integer(stringr::str_extract(from_quarter, "^([[:digit:]]{4}).*([[:digit:]]{1})$", group = c(1,2)))
@@ -69,19 +95,21 @@ filter_by_quarter <- function(d, from_quarter, to_quarter) {
 
   d %>%
     dplyr::filter(
-      (cal_year_ == yq1[1] & cal_quarter_ >= yq1[2]) |
-      (cal_year_ == yq2[1] & cal_quarter_ <= yq2[2]) |
-      (cal_year_ > yq1[1] & cal_year_ < yq2[1])
-    )
+      (.data[["cal_year_"]] == yq1[1] & .data[["cal_quarter_"]] >= yq1[2]) |
+      (.data[["cal_year_"]] == yq2[1] & .data[["cal_quarter_"]] <= yq2[2]) |
+      (.data[["cal_year_"]] > yq1[1] & .data[["cal_year_"]] < yq2[1])
+    ) %>%
+    reorder_quarters()
 }
 
 # combine multiple boolean columns into one such that
 # if any condition is true then the new column is true
+#' @importFrom rlang :=
 #' @export
 combine_cols <- function(d, grouped_colname, colnames) {
   d %>%
     dplyr::mutate(
-      {{ grouped_colname }} := if_any(all_of(colnames), ~.x)
+      {{ grouped_colname }} := dplyr::if_any(dplyr::all_of(colnames), ~.x)
     )
 }
 
