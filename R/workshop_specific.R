@@ -104,6 +104,7 @@ combine_languages <- function(d, languages) {
   combine_cols(d, other_language, languages)
 }
 
+#' Set Topic
 #' @param d workshop dataset
 #' @param topic_categories a character vector whose name is the column and the value is the corresponding topic
 #' @export
@@ -120,7 +121,7 @@ set_topic <- function(d, topic_categories, category_order = NULL, blank_category
     ) %>%
     dplyr::ungroup() %>%
     tidyr::separate_rows(topic, sep = ",") %>%
-    dplyr::mutate(topic = factor(topic, levels = category_order))
+    dplyr::mutate(topic = factor(topic, levels = unique(c(category_order, blank_category))))
 
   return(d)
 }
