@@ -73,7 +73,13 @@ add_year_info <- function(d, date_col) {
       fis_year_ = .data[["cal_year_"]] + ifelse(.data[["cal_quarter_"]] <= 3, 0, 1),
       fis_quarter_ = c(2,3,4,1)[.data[["cal_quarter_"]]]
     ) %>%
-    reorder_quarters()
+    reorder_quarters() %>%
+    dplyr::mutate(
+      cal_year_ = factor(cal_year_),
+      cal_quarter_ = factor(cal_quarter_, c(1,2,3,4)),
+      fis_year_ = factor(fis_year_),
+      fis_quarter_ = factor(fis_quarter_, c(1,2,3,4))
+    )
 }
 
 #' @export
