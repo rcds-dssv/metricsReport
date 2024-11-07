@@ -221,3 +221,19 @@ summarise_statistical_workshops_metrics <- function(
   )
 }
 
+#' @importFrom rlang .data
+#' @export
+pivot_summary_longer <- function(metric_summary) {
+  metric_summary %>%
+    dplyr::mutate(
+      n_workshops = as.numeric(.data[["n_workshops"]]),
+      n_registrations = as.numeric(.data[["n_registrations"]]),
+      n_attendance = as.numeric(.data[["n_attendance"]]),
+      n_attendance_hour = as.numeric(.data[["n_attendance_hour"]])
+    ) %>%
+    tidyr::pivot_longer(
+      cols = c("n_workshops", "n_registrations", "n_attendance", "n_hours", "n_attendance_hour"),
+      names_to = "metric",
+      values_to = "value"
+    )
+}
