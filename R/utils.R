@@ -100,11 +100,16 @@ filter_by_quarter <- function(d, from_quarter, to_quarter) {
   }
 
   d %>%
-    dplyr::filter(
-      (.data[["cal_year_"]] == yq1[1] & .data[["cal_quarter_"]] >= yq1[2]) |
-      (.data[["cal_year_"]] == yq2[1] & .data[["cal_quarter_"]] <= yq2[2]) |
-      (.data[["cal_year_"]] > yq1[1] & .data[["cal_year_"]] < yq2[1])
+    mutate(
+      cal_year_tmp_ = as.numeric(as.character(.data[["cal_year_"]])),
+      cal_quarter_tmp_ = as.numeric(as.character(.data[["cal_quarter_"]]))
     ) %>%
+    dplyr::filter(
+      (.data[["cal_year_tmp_"]] == yq1[1] & .data[["cal_quarter_tmp_"]] >= yq1[2]) |
+      (.data[["cal_year_tmp_"]] == yq2[1] & .data[["cal_quarter_tmp_"]] <= yq2[2]) |
+      (.data[["cal_year_tmp_"]] > yq1[1] & .data[["cal_year_tmp_"]] < yq2[1])
+    ) %>%
+    dplyr::select(-cal_year_tmp_, -cal_quarter_tmp_) %>%
     reorder_quarters()
 }
 
