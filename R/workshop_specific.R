@@ -236,5 +236,6 @@ pivot_summary_longer <- function(metric_summary) {
       cols = c("n_workshops", "n_registrations", "n_attendance", "n_hours", "n_attendance_hour"),
       names_to = "metric",
       values_to = "value"
-    )
+    ) %>%
+    mutate(metric = factor(metric, levels = c("n_workshops", "n_registrations", "n_attendance", "n_hours", "n_attendance_hour")))
 }
