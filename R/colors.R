@@ -1,3 +1,4 @@
+#' @export
 nw_purples <- function() {
   c(
     nw_purple = rgb(078, 042, 132, maxColorValue = 255),
@@ -19,6 +20,7 @@ nw_purples <- function() {
   )
 }
 
+#' @export
 nw_greys <- function() {
   c(
     rich_black = rgb(0, 0, 0, maxColorValue = 255),
