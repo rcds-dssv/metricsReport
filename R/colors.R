@@ -16,7 +16,7 @@ nw_purples <- function() {
     purple_140 = rgb(48, 16, 78, maxColorValue = 255),
     purple_130 = rgb(56, 23, 90, maxColorValue = 255),
     purple_120 = rgb(64, 31, 104, maxColorValue = 255),
-    purple_110 = rgb(72, 36, 118, maxColorValue = 255),
+    purple_110 = rgb(72, 36, 118, maxColorValue = 255)
   )
 }
 
