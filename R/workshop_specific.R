@@ -78,17 +78,76 @@ fill_missing_hours <- function(d) {
     dplyr::mutate(hours = ifelse(is.na(hours), 1, hours))
 }
 
+#' @importFrom rlang .data
 #' @export
-fill_missing_attendance <- function(d, attendance_rate = NA) {
-  # roughly the mean of attendance is 40% of registration
-  attendance <- registration <- NULL
+fill_missing_attendance <- function(d, attendance_rate = NA, use_model = FALSE) {
 
-  attendance_rate <- sum(d[["attendance"]], na.rm = TRUE) / sum(d[["registration"]], na.rm = TRUE)
+  registration <- attendance <- hours <- event_type <- fee <-
+    bio_genomics <- cloud <- data_management <- globus <- gis <-
+    julia <- matlab <- python <- quest <- r <- sql <- statistics <-
+    visualization <- event_type_Virtual <- Other <-  NULL
 
-  message("Estimated attendance rate: ", round(attendance_rate, 2))
+  if (!use_model) {
 
-  d %>%
-    dplyr::mutate(attendance = ifelse(is.na(attendance), as.integer(ceiling(registration*attendance_rate)), attendance))
+    attendance_rate <- sum(d[["attendance"]], na.rm = TRUE) / sum(d[["registration"]], na.rm = TRUE)
+
+    message("Estimated attendance rate: ", round(attendance_rate, 2))
+
+    return(d %>%
+      dplyr::mutate(attendance = ifelse(is.na(attendance), as.integer(ceiling(registration*attendance_rate)), attendance)))
+  }
+
+  else {
+
+    ws <- d %>%
+      # remove cancelled workshops and workshops with missing attendance / reg info
+      dplyr::filter(!stringr::str_detect(.data[["name"]], "Next Steps in Python: Lunch Lessons: List Comprehensions"),
+             !stringr::str_detect(.data[["name"]], "Next Steps in Python: Lunch Lessons: Efficient computing with NumPy"),
+             !is.na(.data[["registration"]]),
+             !is.na(.data[["attendance"]])) %>%
+      # limit training to workshops on and after FY2021
+      dplyr::filter(as.numeric(as.character(.data[["fis_year_"]])) >= 2021) %>%
+      # if attendance exceeds registration, then set registration number
+      # to attendance
+      dplyr::mutate(
+        registration = dplyr::case_when(
+          .data[["attendance"]] > .data[["registration"]] ~ .data[["attendance"]],
+          TRUE ~ .data[["registration"]]
+        ))
+
+    # Define preprocessing
+    workshops_rec <- recipes::recipe(
+      1 ~ registration + attendance + hours + event_type + fee + bio_genomics + cloud + data_management +
+        globus + gis + julia + matlab + python + quest + r + sql + statistics + visualization,
+      data = ws
+    ) %>%
+      recipes::step_mutate(
+        large_registration = registration > 100,
+        data_management = cloud | data_management | globus,
+        Other = julia | matlab | sql | gis,
+        quest = quest | bio_genomics,
+        fee = tidyr::replace_na(fee, FALSE),
+        hours = tidyr::replace_na(hours, 1)
+      ) %>%
+      recipes::step_mutate_at(recipes::all_logical_predictors(), fn = as.integer) %>%
+      recipes::step_dummy(event_type) %>%
+      recipes::prep(training = ws)
+
+    ws_train <- recipes::bake(workshops_rec, new_data = ws)
+
+    logistic_mod <- stats::glm(
+      attendance/registration ~ hours + fee + event_type_Virtual + data_management + python + quest + r +
+        statistics + visualization + Other,
+      data = ws_train, family = stats::binomial, weights = registration)
+
+    att_pred <- as.integer(stats::predict(logistic_mod, recipes::bake(workshops_rec, new_data = d), type = "response") * d[["registration"]])
+
+    d <- d %>%
+      dplyr::mutate(attendance = ifelse(is.na(attendance), att_pred, attendance))
+
+    return(d)
+  }
+
 }
 
 #' @importFrom rlang .data

@@ -18,5 +18,8 @@ Imports:
     RPostgres,
     lubridate,
     stringr,
-    rlang
+    rlang,
+    recipes,
+    stats,
+    grDevices
 RoxygenNote: 7.3.2
