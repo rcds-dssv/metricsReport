@@ -55,7 +55,7 @@ fill_missing_registrations <- function(d, con) {
     dplyr::select(.data[["workshop_id"]], .data[["person_id"]]) %>%
     dplyr::distinct() %>%
     dplyr::group_by(.data[["workshop_id"]]) %>%
-    dplyr::summarise(n_reg = dplyr::n()) %>%
+    dplyr::summarise(n_reg = as.integer(dplyr::n())) %>%
     dplyr::collect()
 
   d <- d %>%
@@ -143,7 +143,7 @@ fill_missing_attendance <- function(d, full_workshop_data) {
       statistics + visualization + Other,
     data = ws_train, family = stats::binomial, weights = registration)
 
-  att_pred <- as.integer(stats::predict(logistic_mod, recipes::bake(workshops_rec, new_data = d), type = "response") * d[["registration"]])
+  att_pred <- as.integer(stats::predict(logistic_mod, recipes::bake(workshops_rec, new_data = d), type = "response") * as.numeric(d[["registration"]]))
 
   d <- d %>%
     dplyr::mutate(attendance = ifelse(is.na(attendance), att_pred, attendance))
