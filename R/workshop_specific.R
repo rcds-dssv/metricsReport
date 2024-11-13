@@ -236,7 +236,7 @@ summarise_workshops_metrics <- function(
     group_by_quarter = TRUE,
     group_by_team = TRUE,
     remove_library = TRUE
-) {
+  ) {
 
   if (remove_library) {
     d <- d %>% drop_library()
@@ -254,7 +254,7 @@ summarise_workshops_metrics <- function(
     d <- d %>% dplyr::group_by(dplyr::across({{ grouping_variable }}), .add=TRUE)
   }
 
-  d <- d %>%
+  d %>%
     dplyr::mutate(attendance_hour = .data[["attendance"]] * .data[["hours"]]) %>%
     dplyr::summarise(
       n_workshops = dplyr::n(),
@@ -263,12 +263,6 @@ summarise_workshops_metrics <- function(
       n_hours = sum(.data[["hours"]], na.rm = TRUE),
       n_attendance_hour = sum(.data[["attendance_hour"]], na.rm = TRUE)
     )
-
-  if (!missing(grouping_variable)) {
-    d <- d %>% tidyr::complete({{grouping_variable}})
-  }
-
-  return(d)
 }
 
 #' @export
