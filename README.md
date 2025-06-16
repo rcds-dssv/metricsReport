@@ -18,6 +18,12 @@ the following packages.
 - recipes
 - devtools
 
+You can install with:
+
+```
+install.packages(c("DBI", "httr", "readxl", "RPostgres", "dplyr", "lubridate", "stringr", "recipes", "devtools"))
+```
+
 ## Installation
 
 You have multiple ways to install the `metricsReport` package.
