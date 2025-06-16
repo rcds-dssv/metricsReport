@@ -30,10 +30,10 @@ You have multiple ways to install the `metricsReport` package.
 
 ### Method 1
 
-If you have SSH key set up, you can install directly from the webpage via this command:
+You can install directly from the repo via this command:
 
 ```
-devtools::install_github("https://github.com/rcds-dssv/metricsReport", force=TRUE)
+devtools::install_github("https://github.com/rcds-dssv/metricsReport")
 ```
 
 ### Method 2
