@@ -1,0 +1,21 @@
+---
+title: "using_database"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{using_database}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+To fully use this package, you 
+
+```{r setup}
+library(metricsReport)
+```
