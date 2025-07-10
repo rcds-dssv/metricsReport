@@ -1,7 +1,7 @@
 # get smartsheet token
 
 get_ss_token <- function(env_file = NULL) {
-  return(get_env_var("SMARTSHEET_TOKEN", env_file))
+  return(get_env_var("SMARTSHEET_ACCESS_TOKEN", env_file))
 }
 
 get_sheet_id <- function(name = NULL) {
