@@ -69,13 +69,17 @@ add_year_info <- function(d, date_col) {
     dplyr::mutate(
       date_ = {{ date_col }},
       cal_year_ = lubridate::year(.data[["date_"]]),
+      cal_month_  = lubridate::month(date_),
+      cal_day_  = lubridate::day(date_),
       cal_quarter_ = lubridate::quarter(.data[["date_"]]),
-      fis_year_ = .data[["cal_year_"]] + ifelse(.data[["cal_quarter_"]] <= 3, 0, 1),
-      fis_quarter_ = c(2,3,4,1)[.data[["cal_quarter_"]]]
+      fis_year_ = .data[["cal_year_"]] + ifelse(cal_month_ >= 9, 1, 0),
+      fis_quarter_ = (((cal_month_ - 9) %% 12) %/% 3) + 1
     ) %>%
     reorder_quarters() %>%
     dplyr::mutate(
       cal_year_ = factor(cal_year_),
+      cal_month_ = factor(cal_month_),
+      cal_day_ = factor(cal_day_),
       cal_quarter_ = factor(cal_quarter_, c(1,2,3,4)),
       fis_year_ = factor(fis_year_),
       fis_quarter_ = factor(fis_quarter_, c(1,2,3,4))
