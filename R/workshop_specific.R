@@ -15,7 +15,7 @@ read_workshop_data <- function(con) {
       registration, attendance, recording_views, waitlist,
       surveys, recommend, learn,
       campus, event_type,
-      fee, open_registration, subtopic,
+      fee, open_registration, status, subtopic,
       ai, bash, bio_genomics, cloud, data_management, ern, gis,
       git, globus, gpu, julia, matlab, python, quest, r, sql, statistics,
       visualization, subtopic_other, subtopic_other_text,
@@ -103,10 +103,10 @@ fill_missing_attendance <- function(d, full_workshop_data) {
 
 
   ws <- full_workshop_data %>%
-    # remove cancelled workshops and workshops with missing attendance / reg info
-    dplyr::filter(!stringr::str_detect(.data[["name"]], "Next Steps in Python: Lunch Lessons: List Comprehensions"),
-           !stringr::str_detect(.data[["name"]], "Next Steps in Python: Lunch Lessons: Efficient computing with NumPy"),
-           !is.na(.data[["registration"]]),
+    # remove canceled / postponed workshops and workshops with missing attendance / reg info
+    drop_canceled() %>%
+    drop_postponed() %>%
+    dplyr::filter(!is.na(.data[["registration"]]),
            !is.na(.data[["attendance"]])) %>%
     # limit training to workshops on and after FY2021
     dplyr::filter(as.numeric(as.character(.data[["fis_year_"]])) >= 2021) %>%
@@ -157,6 +157,22 @@ fill_missing_attendance <- function(d, full_workshop_data) {
 drop_library <- function(d) {
   d %>%
     dplyr::filter(.data[["provider"]] != "Library")
+}
+
+#' @importFrom rlang .data
+#' @export
+drop_canceled <- function(d) {
+  # %in% keeps rows with a missing (NA) status - most historical workshops
+  # predate the "Status" column in the smartsheet
+  d %>%
+    dplyr::filter(!(.data[["status"]] %in% "Canceled"))
+}
+
+#' @importFrom rlang .data
+#' @export
+drop_postponed <- function(d) {
+  d %>%
+    dplyr::filter(!(.data[["status"]] %in% "Postponed"))
 }
 
 #' @export
