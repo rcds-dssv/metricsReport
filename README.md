@@ -43,6 +43,12 @@ Install `pak` if you don't already have it (`install.packages("pak")`), then ins
 pak::pak("rcds-dssv/metricsReport")
 ```
 
+to install without dependencies, use:
+
+```
+pak::pak("rcds-dssv/metricsReport", dependencies = FALSE)
+```
+
 (`devtools::install_github()` also still works, but it is deprecated in favor of `pak`.)
 
 ### Method 2
