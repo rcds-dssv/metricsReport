@@ -189,27 +189,81 @@ summarize_returning_clients <- function(df) {
 
 #' Compute the Breakdown of a Categorical Column for a Given Fiscal Year
 #'
-#' For a given fiscal year, computes the count and percentage of unique
-#' individuals falling into each level of `col`.
+#' For a given fiscal year, computes the count and percentage falling into each
+#' level of `col`, counting either unique people or raw records.
+#'
+#' With `count = "people"` the data are first reduced to distinct
+#' `(fis_year_, person_id, col)` rows, so each person is counted once per year.
+#' Note that `col` has to stay in that key -- it is the column being broken
+#' down, so each person needs a value for it -- which means anyone with two
+#' different recorded values in the same year (e.g. a role change mid-year)
+#' contributes to both levels. With `count = "records"` no de-duplication is
+#' done and every row is counted, so people who use a service repeatedly are
+#' weighted by how often they used it.
 #'
 #' @param input_df a data frame containing at least the columns `fis_year_`,
 #'   `person_id`, and `col`
 #' @param year the fiscal year to filter to
 #' @param col the name (as a string) of the categorical column to break down
+#' @param count either "people" (default, count unique people per year) or
+#'   "records" (count every row)
 #'
 #' @return a data frame with columns `fis_year_`, `col`, `n`, and `pct`
 #' @importFrom rlang .data
 #' @export
-get_df_breakdown <- function(input_df, year, col) {
-  input_df %>%
-    dplyr::select(.data[["fis_year_"]], .data[["person_id"]], dplyr::all_of(col)) %>%
-    dplyr::distinct() %>%
+get_df_breakdown <- function(input_df, year, col, count = c("people", "records")) {
+  count <- match.arg(count)
+
+  d <- input_df %>%
+    dplyr::select(.data[["fis_year_"]], .data[["person_id"]], dplyr::all_of(col))
+
+  if (count == "people") {
+    d <- dplyr::distinct(d)
+  }
+
+  d %>%
     dplyr::group_by(.data[["fis_year_"]], !!rlang::sym(col)) %>%
     dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
     dplyr::group_by(.data[["fis_year_"]]) %>%
     dplyr::mutate(pct = .data[["n"]] / sum(.data[["n"]])) %>%
     dplyr::filter(.data[["fis_year_"]] == year) %>%
     dplyr::ungroup()
+}
+
+#' Compare Unique-People and Per-Record Breakdowns Side by Side
+#'
+#' Runs [get_df_breakdown()] both ways for the same column and joins the
+#' results, so you can see how many distinct people fall into each level, how
+#' many records they account for, and the ratio between the two. The ratio is
+#' a measure of usage intensity: how many times the average person in that
+#' group used the service that year.
+#'
+#' @inheritParams get_df_breakdown
+#'
+#' @return a data frame with columns `col`, `n_people`, `pct_people`,
+#'   `n_records`, `pct_records`, and `records_per_person`, sorted by
+#'   `n_people` (descending)
+#' @importFrom rlang .data
+#' @export
+get_df_breakdown_compare <- function(input_df, year, col) {
+  people <- get_df_breakdown(input_df, year, col, count = "people") %>%
+    dplyr::select(dplyr::all_of(col), n_people = "n", pct_people = "pct")
+
+  records <- get_df_breakdown(input_df, year, col, count = "records") %>%
+    dplyr::select(dplyr::all_of(col), n_records = "n", pct_records = "pct")
+
+  people %>%
+    dplyr::full_join(records, by = col) %>%
+    dplyr::mutate(
+      n_people = tidyr::replace_na(.data[["n_people"]], 0L),
+      n_records = tidyr::replace_na(.data[["n_records"]], 0L),
+      records_per_person = ifelse(
+        .data[["n_people"]] > 0,
+        round(.data[["n_records"]] / .data[["n_people"]], 2),
+        NA_real_
+      )
+    ) %>%
+    dplyr::arrange(dplyr::desc(.data[["n_people"]]))
 }
 
 #' Compute a Ranked Breakdown Table for a Given Fiscal Year
@@ -223,8 +277,9 @@ get_df_breakdown <- function(input_df, year, col) {
 #' @return a data frame with columns `col`, `fis_year_`, `n`, `pct`, and `year`
 #' @importFrom rlang .data
 #' @export
-get_df_breakdown_tbl <- function(input_df, year, col) {
-  get_df_breakdown(input_df, year, col) %>%
+get_df_breakdown_tbl <- function(input_df, year, col, count = c("people", "records")) {
+  count <- match.arg(count)
+  get_df_breakdown(input_df, year, col, count = count) %>%
     dplyr::select(dplyr::all_of(c(col, "fis_year_", "n", "pct"))) %>%
     dplyr::arrange(dplyr::desc(.data[["pct"]])) %>%
     dplyr::mutate(
@@ -245,10 +300,11 @@ get_df_breakdown_tbl <- function(input_df, year, col) {
 #'
 #' @return a flextable object
 #' @export
-make_df_time_table <- function(input_df, year_array, col) {
+make_df_time_table <- function(input_df, year_array, col, count = c("people", "records")) {
+  count <- match.arg(count)
   foo <- purrr::map_dfr(
     year_array,
-    ~ get_df_breakdown_tbl(input_df = input_df, year = .x, col = col)
+    ~ get_df_breakdown_tbl(input_df = input_df, year = .x, col = col, count = count)
   ) %>%
     dplyr::select(dplyr::all_of(col), "year", "n", "pct") %>%
     tidyr::pivot_wider(
@@ -290,8 +346,9 @@ make_df_time_table <- function(input_df, year_array, col) {
 #' @return a ggplot object
 #' @importFrom rlang .data
 #' @export
-make_df_time_plot <- function(input_df, year_array, col) {
-  df_flex <- make_df_time_table(input_df, year_array, col)
+make_df_time_plot <- function(input_df, year_array, col, count = c("people", "records")) {
+  count <- match.arg(count)
+  df_flex <- make_df_time_table(input_df, year_array, col, count = count)
   df_wide <- df_flex$body$dataset
   df_long <- df_wide %>%
     dplyr::select(-dplyr::ends_with("_n")) %>%

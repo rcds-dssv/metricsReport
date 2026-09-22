@@ -4,7 +4,7 @@
 \alias{get_df_breakdown_tbl}
 \title{Compute a Ranked Breakdown Table for a Given Fiscal Year}
 \usage{
-get_df_breakdown_tbl(input_df, year, col)
+get_df_breakdown_tbl(input_df, year, col, count = c("people", "records"))
 }
 \arguments{
 \item{input_df}{a data frame containing at least the columns `fis_year_`,
@@ -13,6 +13,9 @@ get_df_breakdown_tbl(input_df, year, col)
 \item{year}{the fiscal year to filter to}
 
 \item{col}{the name (as a string) of the categorical column to break down}
+
+\item{count}{either "people" (default, count unique people per year) or
+"records" (count every row)}
 }
 \value{
 a data frame with columns `col`, `fis_year_`, `n`, `pct`, and `year`

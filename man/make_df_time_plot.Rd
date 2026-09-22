@@ -4,7 +4,7 @@
 \alias{make_df_time_plot}
 \title{Plot a Column's Breakdown Over Time}
 \usage{
-make_df_time_plot(input_df, year_array, col)
+make_df_time_plot(input_df, year_array, col, count = c("people", "records"))
 }
 \arguments{
 \item{input_df}{a data frame containing at least the columns `fis_year_`,
@@ -13,6 +13,9 @@ make_df_time_plot(input_df, year_array, col)
 \item{year_array}{a vector of fiscal years to include as columns}
 
 \item{col}{the name (as a string) of the categorical column to break down}
+
+\item{count}{either "people" (default, count unique people per year) or
+"records" (count every row)}
 }
 \value{
 a ggplot object

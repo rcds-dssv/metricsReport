@@ -4,7 +4,7 @@
 \alias{get_df_breakdown}
 \title{Compute the Breakdown of a Categorical Column for a Given Fiscal Year}
 \usage{
-get_df_breakdown(input_df, year, col)
+get_df_breakdown(input_df, year, col, count = c("people", "records"))
 }
 \arguments{
 \item{input_df}{a data frame containing at least the columns `fis_year_`,
@@ -13,11 +13,24 @@ get_df_breakdown(input_df, year, col)
 \item{year}{the fiscal year to filter to}
 
 \item{col}{the name (as a string) of the categorical column to break down}
+
+\item{count}{either "people" (default, count unique people per year) or
+"records" (count every row)}
 }
 \value{
 a data frame with columns `fis_year_`, `col`, `n`, and `pct`
 }
 \description{
-For a given fiscal year, computes the count and percentage of unique
-individuals falling into each level of `col`.
+For a given fiscal year, computes the count and percentage falling into each
+level of `col`, counting either unique people or raw records.
+}
+\details{
+With `count = "people"` the data are first reduced to distinct
+`(fis_year_, person_id, col)` rows, so each person is counted once per year.
+Note that `col` has to stay in that key -- it is the column being broken
+down, so each person needs a value for it -- which means anyone with two
+different recorded values in the same year (e.g. a role change mid-year)
+contributes to both levels. With `count = "records"` no de-duplication is
+done and every row is counted, so people who use a service repeatedly are
+weighted by how often they used it.
 }
