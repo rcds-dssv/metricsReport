@@ -43,7 +43,7 @@ Install `pak` if you don't already have it (`install.packages("pak")`), then ins
 pak::pak("rcds-dssv/metricsReport")
 ```
 
-to install without dependencies, use:
+To install without dependencies, use:
 
 ```
 pak::pak("rcds-dssv/metricsReport", dependencies = FALSE)
