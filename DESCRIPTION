@@ -9,7 +9,7 @@ Description: The package provides functions used for retrieving, cleaning, and r
 License: N/A
 Encoding: UTF-8
 LazyData: true
-Imports: 
+Imports:
     DBI,
     dplyr,
     httr,
@@ -21,9 +21,17 @@ Imports:
     rlang,
     recipes,
     stats,
-    grDevices
+    grDevices,
+    tidyr,
+    purrr,
+    ggplot2,
+    flextable,
+    knitr
 RoxygenNote: 7.3.2
-Suggests: 
-    knitr,
-    rmarkdown
+Suggests:
+    rmarkdown,
+    networkD3,
+    htmlwidgets,
+    webshot2,
+    htmltools
 VignetteBuilder: knitr

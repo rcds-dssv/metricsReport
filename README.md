@@ -15,14 +15,21 @@ the following packages.
 - dplyr (part of tidyverse)
 - lubridate (part of tidyverse)
 - stringr (part of tidyverse)
+- tidyr (part of tidyverse)
+- purrr (part of tidyverse)
+- ggplot2 (part of tidyverse)
 - recipes
+- flextable
+- knitr
 - devtools
 
 You can install with:
 
 ```
-install.packages(c("DBI", "httr", "readxl", "RPostgres", "dplyr", "lubridate", "stringr", "recipes", "devtools"))
+install.packages(c("DBI", "httr", "readxl", "RPostgres", "dplyr", "lubridate", "stringr", "tidyr", "purrr", "ggplot2", "recipes", "flextable", "knitr", "devtools"))
 ```
+
+Additionally, `render_sankey()` requires the `networkD3`, `htmlwidgets`, `webshot2`, and `htmltools` packages. These are not installed automatically with this package since they are only needed for that one function.
 
 ## Installation
 
