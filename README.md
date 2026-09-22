@@ -37,11 +37,13 @@ You have multiple ways to install the `metricsReport` package.
 
 ### Method 1
 
-You can install directly from the repo via this command:
+Install `pak` if you don't already have it (`install.packages("pak")`), then install directly from the repo via this command:
 
 ```
-devtools::install_github("https://github.com/rcds-dssv/metricsReport")
+pak::pak("rcds-dssv/metricsReport")
 ```
+
+(`devtools::install_github()` also still works, but it is deprecated in favor of `pak`.)
 
 ### Method 2
 
