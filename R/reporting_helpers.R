@@ -297,10 +297,13 @@ get_df_breakdown_tbl <- function(input_df, year, col, count = c("people", "recor
 #'
 #' @inheritParams get_df_breakdown
 #' @param year_array a vector of fiscal years to include as columns
+#' @param show_percent_symbol if `TRUE` (the default), append "%" to the
+#'   percentages
 #'
 #' @return a flextable object
 #' @export
-make_df_time_table <- function(input_df, year_array, col, count = c("people", "records")) {
+make_df_time_table <- function(input_df, year_array, col, count = c("people", "records"),
+                               show_percent_symbol = TRUE) {
   count <- match.arg(count)
   foo <- purrr::map_dfr(
     year_array,
@@ -314,6 +317,10 @@ make_df_time_table <- function(input_df, year_array, col, count = c("people", "r
       values_fill = 0
     ) %>%
     dplyr::select(dplyr::all_of(col), dplyr::all_of(paste0(rep(year_array, each = 2), "_", c("n", "pct"))))
+
+  if (show_percent_symbol) {
+    foo <- foo %>% dplyr::mutate(dplyr::across(dplyr::ends_with("_pct"), ~ paste0(.x, "%")))
+  }
 
   # Define the header structure
   header <- data.frame(
@@ -343,7 +350,8 @@ make_df_time_table <- function(input_df, year_array, col, count = c("people", "r
 #'
 #' @inheritParams make_df_time_table
 #' @param show_percent_symbol if `TRUE` (the default), append "%" to the
-#'   percentage axis labels
+#'   percentage axis labels. Independent of the same argument in
+#'   [make_df_time_table()].
 #'
 #' @return a ggplot object
 #' @importFrom rlang .data
@@ -351,7 +359,8 @@ make_df_time_table <- function(input_df, year_array, col, count = c("people", "r
 make_df_time_plot <- function(input_df, year_array, col, count = c("people", "records"),
                               show_percent_symbol = TRUE) {
   count <- match.arg(count)
-  df_flex <- make_df_time_table(input_df, year_array, col, count = count)
+  # the plot needs numeric pct values, so never add "%" in the table here
+  df_flex <- make_df_time_table(input_df, year_array, col, count = count, show_percent_symbol = FALSE)
   df_wide <- df_flex$body$dataset
   df_long <- df_wide %>%
     dplyr::select(-dplyr::ends_with("_n")) %>%

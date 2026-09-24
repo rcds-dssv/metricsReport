@@ -24,7 +24,8 @@ make_df_time_plot(
 "records" (count every row)}
 
 \item{show_percent_symbol}{if `TRUE` (the default), append "%" to the
-percentage axis labels}
+percentage axis labels. Independent of the same argument in
+[make_df_time_table()].}
 }
 \value{
 a ggplot object
