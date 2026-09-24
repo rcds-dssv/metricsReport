@@ -4,7 +4,13 @@
 \alias{make_df_time_plot}
 \title{Plot a Column's Breakdown Over Time}
 \usage{
-make_df_time_plot(input_df, year_array, col, count = c("people", "records"))
+make_df_time_plot(
+  input_df,
+  year_array,
+  col,
+  count = c("people", "records"),
+  show_percent_symbol = TRUE
+)
 }
 \arguments{
 \item{input_df}{a data frame containing at least the columns `fis_year_`,
@@ -16,6 +22,9 @@ make_df_time_plot(input_df, year_array, col, count = c("people", "records"))
 
 \item{count}{either "people" (default, count unique people per year) or
 "records" (count every row)}
+
+\item{show_percent_symbol}{if `TRUE` (the default), append "%" to the
+percentage axis labels}
 }
 \value{
 a ggplot object

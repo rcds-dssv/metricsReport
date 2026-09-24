@@ -342,11 +342,14 @@ make_df_time_table <- function(input_df, year_array, col, count = c("people", "r
 #' of percentage over fiscal year, one line per level of `col`.
 #'
 #' @inheritParams make_df_time_table
+#' @param show_percent_symbol if `TRUE` (the default), append "%" to the
+#'   percentage axis labels
 #'
 #' @return a ggplot object
 #' @importFrom rlang .data
 #' @export
-make_df_time_plot <- function(input_df, year_array, col, count = c("people", "records")) {
+make_df_time_plot <- function(input_df, year_array, col, count = c("people", "records"),
+                              show_percent_symbol = TRUE) {
   count <- match.arg(count)
   df_flex <- make_df_time_table(input_df, year_array, col, count = count)
   df_wide <- df_flex$body$dataset
@@ -361,11 +364,17 @@ make_df_time_plot <- function(input_df, year_array, col, count = c("people", "re
     dplyr::mutate(year = as.integer(.data[["year"]]))
 
   col_sym <- rlang::sym(col)
-  ggplot2::ggplot(df_long, ggplot2::aes(x = .data[["year"]], y = .data[["pct"]], group = !!col_sym, color = !!col_sym)) +
+  p <- ggplot2::ggplot(df_long, ggplot2::aes(x = .data[["year"]], y = .data[["pct"]], group = !!col_sym, color = !!col_sym)) +
     ggplot2::geom_line(linewidth = 1) +
     ggplot2::geom_point(size = 2) +
     ggplot2::labs(x = "Fiscal Year", y = "Percentage", color = col) +
     ggplot2::theme_minimal()
+
+  # pct is already on a 0-100 scale (see get_df_breakdown_tbl())
+  if (show_percent_symbol) {
+    p <- p + ggplot2::scale_y_continuous(labels = function(x) paste0(x, "%"))
+  }
+  p
 }
 
 #' Categorize a Month Number into an Academic Quarter
