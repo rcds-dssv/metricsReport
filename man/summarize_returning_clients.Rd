@@ -2,7 +2,7 @@
 % Please edit documentation in R/reporting_helpers.R
 \name{summarize_returning_clients}
 \alias{summarize_returning_clients}
-\title{Summarize the Fraction of Returning Clients per Year}
+\title{Summarize the Percentage of Returning Clients per Year}
 \usage{
 summarize_returning_clients(df)
 }
@@ -10,11 +10,13 @@ summarize_returning_clients(df)
 \item{df}{a data frame containing at least the columns `fis_year_` and `person_id`}
 }
 \value{
-a flextable object
+a flextable object. The underlying data (`$body$dataset`) keeps
+  `pct_repeaters` numeric (0-100, rounded to 1 decimal) so it can be
+  plotted; the "%" sign is added only in the displayed table.
 }
 \description{
 Creates a flextable summarizing, for each fiscal year, the number of unique
 individuals, how many of them were repeat users (either they appear more
 than once within that year, or they had already appeared in an earlier
-year), and the resulting fraction of repeaters.
+year), and the resulting percentage of repeaters.
 }

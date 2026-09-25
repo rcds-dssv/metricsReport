@@ -185,16 +185,18 @@ summarize_year_pair <- function(year_pair, df) {
     dplyr::select("year_pair", dplyr::everything())
 }
 
-#' Summarize the Fraction of Returning Clients per Year
+#' Summarize the Percentage of Returning Clients per Year
 #'
 #' Creates a flextable summarizing, for each fiscal year, the number of unique
 #' individuals, how many of them were repeat users (either they appear more
 #' than once within that year, or they had already appeared in an earlier
-#' year), and the resulting fraction of repeaters.
+#' year), and the resulting percentage of repeaters.
 #'
 #' @param df a data frame containing at least the columns `fis_year_` and `person_id`
 #'
-#' @return a flextable object
+#' @return a flextable object. The underlying data (`$body$dataset`) keeps
+#'   `pct_repeaters` numeric (0-100, rounded to 1 decimal) so it can be
+#'   plotted; the "%" sign is added only in the displayed table.
 #' @importFrom rlang .data
 #' @export
 summarize_returning_clients <- function(df) {
@@ -225,16 +227,17 @@ summarize_returning_clients <- function(df) {
         dplyr::count(.data[["year_num"]], name = "total_in_year"),
       by = "year_num"
     ) %>%
-    # fraction of repeaters
-    dplyr::mutate(frac_repeaters = round(.data[["n_repeaters"]] / .data[["total_in_year"]], 3)) %>%
-    dplyr::select("year_num", "total_in_year", "n_repeaters", "frac_repeaters") %>%
+    # percentage of repeaters
+    dplyr::mutate(pct_repeaters = round(100 * .data[["n_repeaters"]] / .data[["total_in_year"]], 1)) %>%
+    dplyr::select("year_num", "total_in_year", "n_repeaters", "pct_repeaters") %>%
     flextable::flextable() %>%
     flextable::colformat_num(col_keys = "year_num", big.mark = "", digits = 0) %>%
+    flextable::colformat_double(j = "pct_repeaters", digits = 1, suffix = "%") %>%
     flextable::set_header_labels(
       year_num = "Fiscal Year",
       total_in_year = "Number of Unique Individuals",
       n_repeaters = "Number of Returning Individuals",
-      frac_repeaters = "Fraction of Individuals Who are Return Users"
+      pct_repeaters = "Percent of Individuals Who are Return Users"
     ) %>%
     flextable::autofit()
 }
