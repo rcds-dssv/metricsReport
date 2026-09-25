@@ -13,9 +13,15 @@ summarize_year_pair(year_pair, df)
 }
 \value{
 a one-row data frame with columns `year_pair`, `n_earlier`, `n_later`,
-  `n_both`, and `frac_returning`
+  `n_both`, and `pct_returning` (the percentage, 0-100, of people in the
+  earlier year who also appear in the later year; unrounded)
 }
 \description{
 Given a pair of fiscal years, computes how many unique people appeared in
 the earlier year, the later year, and both years.
+}
+\details{
+The `year_pair` label (e.g. "2020-2021") uses a non-breaking hyphen in HTML
+output so tables don't wrap it onto two lines; for other output (e.g. PDF,
+where the font may lack that character) it uses a plain hyphen.
 }

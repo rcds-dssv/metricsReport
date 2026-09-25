@@ -145,11 +145,16 @@ recode_role_school <- function(df,
 #' Given a pair of fiscal years, computes how many unique people appeared in
 #' the earlier year, the later year, and both years.
 #'
+#' The `year_pair` label (e.g. "2020-2021") uses a non-breaking hyphen in HTML
+#' output so tables don't wrap it onto two lines; for other output (e.g. PDF,
+#' where the font may lack that character) it uses a plain hyphen.
+#'
 #' @param year_pair a length-2 vector giving the earlier and later fiscal year
 #' @param df a data frame containing at least the columns `fis_year_` and `person_id`
 #'
 #' @return a one-row data frame with columns `year_pair`, `n_earlier`, `n_later`,
-#'   `n_both`, and `frac_returning`
+#'   `n_both`, and `pct_returning` (the percentage, 0-100, of people in the
+#'   earlier year who also appear in the later year; unrounded)
 #' @importFrom rlang .data
 #' @export
 summarize_year_pair <- function(year_pair, df) {
@@ -173,9 +178,10 @@ summarize_year_pair <- function(year_pair, df) {
       n_earlier = sum(.data[["person_id"]] %in% id_earlier),
       n_later   = sum(.data[["person_id"]] %in% id_later),
       n_both    = sum(.data[["person_id"]] %in% id_earlier & .data[["person_id"]] %in% id_later),
-      frac_returning = .data[["n_both"]] / .data[["n_earlier"]]
+      pct_returning = 100 * .data[["n_both"]] / .data[["n_earlier"]]
     ) %>%
-    dplyr::mutate(year_pair = paste0(year_pair[1], "-", year_pair[2])) %>%
+    # U+2011 is a non-breaking hyphen
+    dplyr::mutate(year_pair = paste0(year_pair[1], if (knitr::is_html_output()) "‑" else "-", year_pair[2])) %>%
     dplyr::select("year_pair", dplyr::everything())
 }
 
