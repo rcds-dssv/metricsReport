@@ -36,6 +36,7 @@ export(pivot_summary_longer)
 export(quarter_from_month)
 export(read_project_data)
 export(read_workshop_data)
+export(recode_role_school)
 export(render_sankey)
 export(set_topic)
 export(summarise_statistical_workshops_metrics)
@@ -44,5 +45,7 @@ export(summarise_workshops_missing)
 export(summarize_returning_clients)
 export(summarize_year_pair)
 importFrom(magrittr,"%>%")
-importFrom(rlang,":=")
-importFrom(rlang,.data)
+importFrom(rlang,
+  ":=",
+  .data
+)

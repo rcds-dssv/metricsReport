@@ -1,6 +1,6 @@
-# General-purpose helpers for building report tables and plots (breakdowns of
-# a column over time, returning-client summaries, flextable/PDF fitting, and
-# Sankey rendering). These are not specific to any one service (workshops,
+# General-purpose helpers for building report tables and plots (role/school
+# recoding, breakdowns of a column over time, returning-client summaries,
+# flextable/PDF fitting, and Sankey rendering). These are not specific to any one service (workshops,
 # consults, ...) beyond the shared `fis_year_` / `person_id` conventions used
 # throughout this package.
 
@@ -92,6 +92,52 @@ myflextablefitter_if_pdf <- function(ft, ...) {
   } else {
     ft
   }
+}
+
+#' Recode Role and School into the Standard Reporting Categories
+#'
+#' Applies the same role/school recoding to any service's data (workshop
+#' registrations, consults, BYOD, projects) so all services always use
+#' identical categories:
+#'
+#' * missing or blank roles and schools become "Other"
+#' * the "Graduate Student" role is recoded to "PhD Student"
+#' * role becomes a factor with levels `role_order`
+#' * "NW Medicine", "Lurie Childrens", and "SRA Lab" are combined into
+#'   "Medical Affiliates"
+#' * "Communication", "Bienen", "Medill", and "SESP" are combined into
+#'   "Comm/Bien/Medi/SESP"
+#'
+#' @param df a data frame containing at least the columns `role` and `school`
+#' @param role_order the role factor levels, in display order. Any role not
+#'   listed here becomes `NA`.
+#'
+#' @return `df` with `role` and `school` recoded as factors
+#' @importFrom rlang .data
+#' @export
+recode_role_school <- function(df,
+                               role_order = c(
+                                 "Undergraduate Student", "Graduate Student", "Master's Student",
+                                 "PhD Student", "Professional Student", "Postdoc", "Staff",
+                                 "Faculty", "Other"
+                               )) {
+  df %>%
+    dplyr::mutate(
+      role = as.character(.data[["role"]]),
+      role = ifelse(is.na(.data[["role"]]) | stringr::str_trim(.data[["role"]]) == "", "Other", .data[["role"]]),
+      role = forcats::fct_recode(.data[["role"]], "PhD Student" = "Graduate Student"),
+      role = factor(.data[["role"]], levels = role_order)
+    ) %>%
+    dplyr::mutate(
+      school = as.character(.data[["school"]]),
+      school = ifelse(is.na(.data[["school"]]) | stringr::str_trim(.data[["school"]]) == "", "Other", .data[["school"]]),
+      school = factor(.data[["school"]]),
+      school = forcats::fct_collapse(
+        .data[["school"]],
+        `Medical Affiliates` = c("NW Medicine", "Lurie Childrens", "SRA Lab"),
+        `Comm/Bien/Medi/SESP` = c("Communication", "Bienen", "Medill", "SESP")
+      )
+    )
 }
 
 #' Summarize Returning Clients Between a Pair of Fiscal Years

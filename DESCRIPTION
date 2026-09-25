@@ -26,8 +26,8 @@ Imports:
     purrr,
     ggplot2,
     flextable,
-    knitr
-RoxygenNote: 7.3.2
+    knitr,
+    forcats
 Suggests:
     rmarkdown,
     networkD3,
@@ -35,3 +35,4 @@ Suggests:
     webshot2,
     htmltools
 VignetteBuilder: knitr
+Config/roxygen2/version: 8.1.0
