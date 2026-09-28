@@ -505,11 +505,12 @@ get_quarterly_load <- function(ws_df, consult_df) {
 #' @param links a data frame of Sankey links with columns `source`, `target`, `value`
 #' @param nodes a data frame of Sankey nodes with a `name` column
 #' @param file_prefix prefix used for the intermediate HTML/PNG file names
+#' @param width,height size of the diagram, in pixels
 #'
 #' @return for HTML output, a `sankeyNetwork` htmlwidget; for PDF/LaTeX output,
 #'   the result of [knitr::include_graphics()] pointing at the rendered PNG
 #' @export
-render_sankey <- function(links, nodes, file_prefix = "sankey") {
+render_sankey <- function(links, nodes, file_prefix = "sankey", width = 400, height = 400) {
   require_pkgs <- function(pkgs) {
     missing_pkgs <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
     if (length(missing_pkgs) > 0) {
@@ -528,8 +529,8 @@ render_sankey <- function(links, nodes, file_prefix = "sankey") {
     NodeID = "name",
     fontSize = 16,
     nodeWidth = 60,
-    width = 400,
-    height = 400
+    width = width,
+    height = height
   )
   if (knitr::is_html_output()) {
     return(p)
@@ -541,7 +542,7 @@ render_sankey <- function(links, nodes, file_prefix = "sankey") {
     html_file <- paste0(file_prefix, "_tmp.html")
     png_file <- paste0(file_prefix, ".png")
     htmlwidgets::saveWidget(p, html_file, selfcontained = TRUE)
-    webshot2::webshot(html_file, file = png_file, vwidth = 800, vheight = 800, zoom = 2, cliprect = "viewport")
+    webshot2::webshot(html_file, file = png_file, vwidth = max(800, width), vheight = max(800, height), zoom = 2, cliprect = "viewport")
     return(knitr::include_graphics(png_file))
   }
 }

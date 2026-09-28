@@ -4,7 +4,7 @@
 \alias{render_sankey}
 \title{Render a Sankey Diagram, Falling Back to a Static Image for PDF Output}
 \usage{
-render_sankey(links, nodes, file_prefix = "sankey")
+render_sankey(links, nodes, file_prefix = "sankey", width = 400, height = 400)
 }
 \arguments{
 \item{links}{a data frame of Sankey links with columns `source`, `target`, `value`}
@@ -12,6 +12,8 @@ render_sankey(links, nodes, file_prefix = "sankey")
 \item{nodes}{a data frame of Sankey nodes with a `name` column}
 
 \item{file_prefix}{prefix used for the intermediate HTML/PNG file names}
+
+\item{width, height}{size of the diagram, in pixels}
 }
 \value{
 for HTML output, a `sankeyNetwork` htmlwidget; for PDF/LaTeX output,
