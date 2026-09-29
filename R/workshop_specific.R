@@ -1,17 +1,35 @@
+#' Read Workshop Data
+#'
+#' Reads the `workshop` table from the metrics database and adds calendar and
+#' fiscal year columns with [add_year_info()], using `start_date`.
+#'
+#' `start_datetime` is the workshop's start date and time from Eventbrite,
+#' returned as a `"YYYY-MM-DD HH:MM:SS"` string in Chicago time. It is only
+#' filled in for single-day workshops (`NA` for multi-day workshops, Eventbrite
+#' series, and workshops without an Eventbrite event).
+#'
+#' @param con a connection to the metrics database, e.g. from [get_metrics_db_conn()]
+#'
+#' @return a data frame with one row per workshop, including `date_`,
+#'   `cal_year_`, `cal_month_`, `cal_day_`, `cal_quarter_`, `fis_year_`,
+#'   `fis_quarter_`, and `quarter_name_`
+#' @seealso [read_workshop_registration_data()], [read_consult_data()],
+#'   [read_byod_data()], [read_project_data()]
 #' @export
 read_workshop_data <- function(con) {
-  start_date <- NULL
+  start_date <- start_datetime <- NULL
 
   con %>%
     dplyr::tbl("workshop") %>%
     dplyr::collect() %>%
+    dplyr::mutate(start_datetime = format_chicago_datetime(start_datetime)) %>%
     add_year_info(start_date) %>%
     # order columns
     select(
       id, series, name, eventbrite_id, smartsheet_rid,
       focus_area, focus_dssv, focus_rdm, focus_rcs,
       provider, rcs_taught,
-      start_date, hours,
+      start_date, start_datetime, hours,
       registration, attendance, recording_views, waitlist,
       surveys, recommend, learn,
       campus, event_type,
@@ -22,6 +40,35 @@ read_workshop_data <- function(con) {
       date_, cal_year_, cal_month_, cal_day_, cal_quarter_, fis_year_, fis_quarter_,
       quarter_name_
     )
+}
+
+#' Read Workshop Registration Data
+#'
+#' Reads the `workshop_registration` table from the metrics database, with each
+#' registrant's role, school, and department (from `person_history`, as of the
+#' registration). The registration `id` is renamed `reg_id`. Join the result
+#' with [read_workshop_data()] by `workshop_id` for workshop details and dates.
+#'
+#' @param con a connection to the metrics database, e.g. from [get_metrics_db_conn()]
+#' @param workshop_ids optional vector of workshop ids to keep (e.g. `workshops$id`);
+#'   if `NULL`, all registrations are returned
+#'
+#' @return a data frame with one row per workshop registration
+#' @seealso [read_workshop_data()]
+#' @export
+read_workshop_registration_data <- function(con, workshop_ids = NULL) {
+  workshop_id <- NULL
+
+  d <- dplyr::tbl(con, "workshop_registration")
+  if (!is.null(workshop_ids)) {
+    d <- d %>% dplyr::filter(workshop_id %in% !!workshop_ids)
+  }
+
+  d %>%
+    join_person_info(con) %>%
+    dplyr::collect() %>%
+    dplyr::rename(reg_id = "id") %>%
+    dplyr::select(dplyr::contains("id"), dplyr::everything())
 }
 
 #' @importFrom rlang .data

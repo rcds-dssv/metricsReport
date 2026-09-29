@@ -60,6 +60,26 @@ reorder_quarters <- function(d) {
     )
 }
 
+# Join each row's person information (role, school, department at the time of the
+# touch-point) from the person_history table, by history_id. `d` is a lazy table
+# from the same connection, so the join runs in the database before collecting.
+join_person_info <- function(d, con) {
+  d %>%
+    dplyr::left_join(
+      dplyr::tbl(con, "person_history") %>%
+        dplyr::select("id", "role", "school", "department"),
+      by = c(history_id = "id")
+    )
+}
+
+# Format a date-time as a "YYYY-MM-DD HH:MM:SS" string in Chicago time (NA stays NA),
+# so it is written to csv files as the local clock time.
+format_chicago_datetime <- function(x) {
+  out <- format(lubridate::with_tz(x, "America/Chicago"), "%Y-%m-%d %H:%M:%S")
+  out[is.na(x)] <- NA_character_
+  out
+}
+
 #' @importFrom rlang .data
 #' @export
 add_year_info <- function(d, date_col) {

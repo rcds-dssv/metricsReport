@@ -15,7 +15,8 @@ a data frame with one row per project, including `date_`,
   `fis_quarter_`, and `quarter_name_`
 }
 \description{
-Reads the `project` table from the metrics database and adds calendar and
+Reads the `project` table from the metrics database, with the researcher's
+role, school, and department (from `person_history`), and adds calendar and
 fiscal year columns with [add_year_info()], using `start_date`.
 }
 \details{
@@ -25,4 +26,7 @@ fiscal year, and the SharePoint creation date. `start_date_source` records
 which one was used (`"actual"`, `"estimated"`, `"fiscal_year"`, or
 `"created"`). Calendar quarters are only meaningful for `"actual"` and
 `"estimated"`; fiscal years are meaningful for all but `"created"`.
+}
+\seealso{
+[read_workshop_data()], [read_consult_data()], [read_byod_data()]
 }
