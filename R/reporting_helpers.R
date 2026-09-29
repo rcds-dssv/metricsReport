@@ -546,3 +546,224 @@ render_sankey <- function(links, nodes, file_prefix = "sankey", width = 400, hei
     return(knitr::include_graphics(png_file))
   }
 }
+
+#' Fiscal Year Helpers
+#'
+#' Northwestern fiscal years run Sept. 1 - Aug. 31 and are named for the
+#' calendar year they end in (FY26 = Sept. 1, 2025 - Aug. 31, 2026), as in
+#' [add_year_info()]. `date_to_fy()` gives the fiscal year of a date;
+#' `fy_first_day()` and `fy_last_day()` give the first and last day of a
+#' fiscal year.
+#'
+#' @param d a vector of dates
+#' @param fy a vector of fiscal years (e.g. `2026`)
+#'
+#' @return `date_to_fy()`: an integer vector of fiscal years;
+#'   `fy_first_day()`, `fy_last_day()`: a vector of dates
+#' @name fiscal_year_helpers
+NULL
+
+#' @rdname fiscal_year_helpers
+#' @export
+date_to_fy <- function(d) as.integer(lubridate::year(d) + (lubridate::month(d) >= 9))
+
+#' @rdname fiscal_year_helpers
+#' @export
+fy_first_day <- function(fy) as.Date(paste0(fy - 1, "-09-01"))
+
+#' @rdname fiscal_year_helpers
+#' @export
+fy_last_day <- function(fy) as.Date(paste0(fy, "-08-31"))
+
+#' Get the Time of Day from a Date-Time Column
+#'
+#' Returns the time of day (`"HH:MM:SS"`) from a date-time column of a data
+#' frame read from the metrics csv files (e.g. `start_datetime` in
+#' `workshops.csv` or `created_datetime` in `consults.csv`, which hold Chicago
+#' clock times). `readr::read_csv()` may read these as date-times labeled UTC
+#' (while holding the Chicago clock time) or as text, so both are handled.
+#'
+#' @param df a data frame
+#' @param col name of the date-time column, as a string
+#'
+#' @return a character vector of times of day, or `NA` if `col` is not in `df`
+#'   (e.g. in csv files made before the column was added)
+#' @export
+time_of_day <- function(df, col) {
+  if (!col %in% names(df)) return(NA_character_)
+  x <- df[[col]]
+  if (inherits(x, "POSIXct")) format(x, "%H:%M:%S", tz = "UTC") else stringr::str_sub(as.character(x), 12, 19)
+}
+
+#' Count Unique People by Role and School
+#'
+#' Counts unique people (`person_id`) in each role and school combination, in
+#' one fiscal year or over all rows. A person with two different recorded roles
+#' or schools appears in more than one combination.
+#'
+#' @param df a data frame with `person_id`, `role`, `school`, and (if `year` is
+#'   given) `fis_year_` columns
+#' @param year a fiscal year, or `NULL` to use every row of `df`
+#'
+#' @return a data frame with `role`, `school`, and `n` (unique people)
+#' @seealso [role_school_cell()], [plot_role_school_heatmap()]
+#' @export
+role_school_counts <- function(df, year = NULL) {
+  if (!is.null(year)) df <- df %>% dplyr::filter(.data[["fis_year_"]] == year)
+  df %>%
+    dplyr::distinct(.data[["person_id"]], .data[["role"]], .data[["school"]]) %>%
+    dplyr::count(.data[["role"]], .data[["school"]])
+}
+
+#' Get One Role and School Combination
+#'
+#' Unique people in one role and school combination in a fiscal year, and their
+#' percentage of all unique people that year. Used for takeaways that describe
+#' the largest role-and-school group, so it warns if the combination is not the
+#' largest one.
+#'
+#' @inheritParams role_school_counts
+#' @param role_name,school_name the role and school of the combination
+#'
+#' @return a one-row data frame with `n` (unique people) and `pct`
+#' @seealso [role_school_counts()]
+#' @export
+role_school_cell <- function(df, year, role_name, school_name) {
+  counts <- role_school_counts(df, year)
+  n_cell <- sum(counts$n[counts$role == role_name & counts$school == school_name])
+  if (n_cell < max(counts$n)) warning(school_name, " ", role_name, " is no longer the largest role x school group")
+  n_total <- df %>% dplyr::filter(.data[["fis_year_"]] == year) %>% dplyr::distinct(.data[["person_id"]]) %>% nrow()
+  dplyr::tibble(n = n_cell, pct = 100 * n_cell / n_total)
+}
+
+#' Plot a Heatmap of Unique People by Role and School
+#'
+#' Each cell is the number of unique people with that role and school (blank
+#' cells are 0), from [role_school_counts()]. Schools with the most people are
+#' on the left, and roles are in their factor order from the top.
+#'
+#' @inheritParams role_school_counts
+#' @param title plot title
+#'
+#' @return a ggplot object
+#' @seealso [role_school_counts()]
+#' @export
+plot_role_school_heatmap <- function(df, year, title) {
+  role <- school <- n <- NULL
+
+  role_school_counts(df, year) %>%
+    # keep only the roles and schools that appear, then fill in the empty cells
+    dplyr::mutate(dplyr::across(c(role, school), forcats::fct_drop)) %>%
+    tidyr::complete(role, school, fill = list(n = 0L)) %>%
+    dplyr::mutate(
+      # schools with the most people on the left, roles in the usual order from the top
+      school = forcats::fct_reorder(school, n, sum, .desc = TRUE),
+      role = forcats::fct_rev(role)
+    ) %>%
+    ggplot2::ggplot(ggplot2::aes(x = school, y = role, fill = n)) +
+    ggplot2::geom_tile(color = "white") +
+    ggplot2::geom_text(ggplot2::aes(label = dplyr::if_else(n > 0, as.character(n), ""), color = n > max(n) / 2),
+                       size = 3, show.legend = FALSE) +
+    ggplot2::scale_color_manual(values = c(`FALSE` = "black", `TRUE` = "white")) +
+    ggplot2::scale_fill_gradient(low = "#eef3fa", high = "#08306b") +
+    ggplot2::ggtitle(title) +
+    ggplot2::xlab("") +
+    ggplot2::ylab("") +
+    ggplot2::labs(fill = "Unique\nPeople") +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1), panel.grid = ggplot2::element_blank())
+}
+
+#' Count Cumulative Unique People by Fiscal Year
+#'
+#' For each fiscal year, the number of distinct people (`person_id`) with any
+#' row in that year or earlier.
+#'
+#' @param df a data frame with `person_id` and `fis_year_` columns
+#' @param years the fiscal years to count through
+#'
+#' @return a data frame with `fis_year_` and `cumulative_unique`
+#' @export
+cumulative_unique_people <- function(df, years) {
+  df_years <- as.integer(as.character(df$fis_year_))
+  dplyr::tibble(
+    fis_year_ = years,
+    cumulative_unique = purrr::map_int(years, ~ dplyr::n_distinct(df$person_id[df_years <= .x]))
+  )
+}
+
+#' Make a Table of a Measure by Fiscal Year and Service
+#'
+#' One row per fiscal year and one column per service (in the factor order of
+#' `service_`), with each cell given by `value`.
+#'
+#' @param df a data frame with `fis_year_` and `service_` columns, one row per
+#'   fiscal year and service
+#' @param value an expression, evaluated in `df`, giving each cell's text, e.g.
+#'   `paste0(n_ai, " of ", n_total, " (", round(pct_ai), "%)")`
+#'
+#' @return a flextable object
+#' @export
+make_service_year_table <- function(df, value) {
+  fis_year_ <- service_ <- NULL
+
+  df %>%
+    dplyr::arrange(service_) %>%
+    dplyr::mutate(value = {{ value }}) %>%
+    dplyr::select(fis_year_, service_, value) %>%
+    tidyr::pivot_wider(names_from = service_, values_from = value, values_fill = "") %>%
+    dplyr::arrange(fis_year_) %>%
+    dplyr::mutate(fis_year_ = as.character(fis_year_)) %>%
+    flextable::flextable() %>%
+    flextable::set_header_labels(fis_year_ = "Fiscal Year") %>%
+    flextable::autofit() %>%
+    myflextablefitter_if_pdf()
+}
+
+#' Plot a Percentage by Fiscal Year
+#'
+#' A line plot of a percentage over fiscal years (x-axis labeled "FY20",
+#' "FY21", ...), optionally one line per group, and optionally with the
+#' percentage written above each point. The y-axis starts at 0.
+#'
+#' @param df a data frame with a `fis_year_` column
+#' @param pct the column holding the percentage (0 - 100)
+#' @param years the fiscal years for the x-axis breaks
+#' @param color optional column to draw one line per group (e.g. `service_`)
+#' @param title,ylab plot title and y-axis label
+#' @param show_labels whether to write the percentage above each point
+#' @param y_max optional top of the y-axis (e.g. `100`)
+#'
+#' @return a ggplot object
+#' @export
+plot_pct_by_year <- function(df, pct, years, color = NULL, title = NULL, ylab = "Percent",
+                             show_labels = TRUE, y_max = NA) {
+  fis_year_ <- NULL
+  grouped <- !rlang::quo_is_null(rlang::enquo(color))
+
+  p <- df %>%
+    dplyr::mutate(fis_year_ = as.integer(as.character(fis_year_))) %>%
+    ggplot2::ggplot(ggplot2::aes(x = fis_year_, y = {{ pct }}, color = {{ color }})) +
+    ggplot2::geom_line(linewidth = 1) +
+    ggplot2::geom_point(size = 2)
+
+  if (show_labels) {
+    p <- p + ggplot2::geom_text(ggplot2::aes(label = paste0(round({{ pct }}), "%")),
+                                vjust = -0.8, size = 3, show.legend = FALSE)
+  }
+
+  p <- p +
+    ggplot2::scale_x_continuous(breaks = years, labels = paste0("FY", stringr::str_sub(years, 3))) +
+    # leave room above the points for the labels
+    ggplot2::scale_y_continuous(labels = function(x) paste0(x, "%"),
+                                expand = ggplot2::expansion(mult = c(0.02, if (show_labels) 0.12 else 0.05))) +
+    ggplot2::expand_limits(y = c(0, y_max)) +
+    ggplot2::ggtitle(title) +
+    ggplot2::xlab("Fiscal Year") +
+    ggplot2::ylab(ylab)
+
+  if (grouped) {
+    p <- p + ggplot2::labs(color = "") + ggplot2::theme(legend.position = "bottom")
+  }
+  p
+}
