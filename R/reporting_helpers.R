@@ -125,18 +125,18 @@ recode_role_school <- function(df,
     dplyr::mutate(
       role = as.character(.data[["role"]]),
       role = ifelse(is.na(.data[["role"]]) | stringr::str_trim(.data[["role"]]) == "", "Other", .data[["role"]]),
-      role = forcats::fct_recode(.data[["role"]], "PhD Student" = "Graduate Student"),
+      role = dplyr::if_else(.data[["role"]] == "Graduate Student", "PhD Student", .data[["role"]]),
       role = factor(.data[["role"]], levels = role_order)
     ) %>%
     dplyr::mutate(
       school = as.character(.data[["school"]]),
       school = ifelse(is.na(.data[["school"]]) | stringr::str_trim(.data[["school"]]) == "", "Other", .data[["school"]]),
-      school = factor(.data[["school"]]),
-      school = forcats::fct_collapse(
-        .data[["school"]],
-        `Medical Affiliates` = c("NW Medicine", "Lurie Childrens", "SRA Lab"),
-        `Comm/Bien/Medi/SESP` = c("Communication", "Bienen", "Medill", "SESP")
-      )
+      school = dplyr::case_when(
+        .data[["school"]] %in% c("NW Medicine", "Lurie Childrens", "SRA Lab") ~ "Medical Affiliates",
+        .data[["school"]] %in% c("Communication", "Bienen", "Medill", "SESP") ~ "Comm/Bien/Medi/SESP",
+        TRUE ~ .data[["school"]]
+      ),
+      school = factor(.data[["school"]])
     )
 }
 
@@ -281,7 +281,8 @@ get_df_breakdown <- function(input_df, year, col, count = c("people", "records")
     dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
     dplyr::group_by(.data[["fis_year_"]]) %>%
     dplyr::mutate(pct = .data[["n"]] / sum(.data[["n"]])) %>%
-    dplyr::filter(.data[["fis_year_"]] == year) %>%
+    # !! uses the `year` argument, even if the data has its own `year` column (e.g. BYOD)
+    dplyr::filter(.data[["fis_year_"]] == !!year) %>%
     dplyr::ungroup()
 }
 
@@ -609,7 +610,8 @@ time_of_day <- function(df, col) {
 #' @seealso [role_school_cell()], [plot_role_school_heatmap()]
 #' @export
 role_school_counts <- function(df, year = NULL) {
-  if (!is.null(year)) df <- df %>% dplyr::filter(.data[["fis_year_"]] == year)
+  # !! uses the `year` argument, even if the data has its own `year` column (e.g. BYOD)
+  if (!is.null(year)) df <- df %>% dplyr::filter(.data[["fis_year_"]] == !!year)
   df %>%
     dplyr::distinct(.data[["person_id"]], .data[["role"]], .data[["school"]]) %>%
     dplyr::count(.data[["role"]], .data[["school"]])
@@ -632,15 +634,16 @@ role_school_cell <- function(df, year, role_name, school_name) {
   counts <- role_school_counts(df, year)
   n_cell <- sum(counts$n[counts$role == role_name & counts$school == school_name])
   if (n_cell < max(counts$n)) warning(school_name, " ", role_name, " is no longer the largest role x school group")
-  n_total <- df %>% dplyr::filter(.data[["fis_year_"]] == year) %>% dplyr::distinct(.data[["person_id"]]) %>% nrow()
+  n_total <- df %>% dplyr::filter(.data[["fis_year_"]] == !!year) %>% dplyr::distinct(.data[["person_id"]]) %>% nrow()
   dplyr::tibble(n = n_cell, pct = 100 * n_cell / n_total)
 }
 
 #' Plot a Heatmap of Unique People by Role and School
 #'
-#' Each cell is the number of unique people with that role and school (blank
-#' cells are 0), from [role_school_counts()]. Schools with the most people are
-#' on the left, and roles are in their factor order from the top.
+#' Each cell is the number of unique people with that role and school, and
+#' their percentage of all unique people in `df` (that year), e.g. "97 (19%)";
+#' blank cells are 0. Counts come from [role_school_counts()]. Schools with the
+#' most people are on the left, and roles are in their factor order from the top.
 #'
 #' @inheritParams role_school_counts
 #' @param title plot title
@@ -650,6 +653,11 @@ role_school_cell <- function(df, year, role_name, school_name) {
 #' @export
 plot_role_school_heatmap <- function(df, year, title) {
   role <- school <- n <- NULL
+
+  # unique people (the denominator for the percentages), in the same rows as the counts
+  df_year <- if (is.null(year)) df else df %>% dplyr::filter(.data[["fis_year_"]] == !!year)
+  n_total <- dplyr::n_distinct(df_year$person_id)
+  pct_label <- function(x) paste0(x, " (", round(100 * x / n_total), "%)")
 
   role_school_counts(df, year) %>%
     # keep only the roles and schools that appear, then fill in the empty cells
@@ -662,14 +670,14 @@ plot_role_school_heatmap <- function(df, year, title) {
     ) %>%
     ggplot2::ggplot(ggplot2::aes(x = school, y = role, fill = n)) +
     ggplot2::geom_tile(color = "white") +
-    ggplot2::geom_text(ggplot2::aes(label = dplyr::if_else(n > 0, as.character(n), ""), color = n > max(n) / 2),
-                       size = 3, show.legend = FALSE) +
+    ggplot2::geom_text(ggplot2::aes(label = dplyr::if_else(n > 0, pct_label(n), ""), color = n > max(n) / 2),
+                       size = 2.7, show.legend = FALSE) +
     ggplot2::scale_color_manual(values = c(`FALSE` = "black", `TRUE` = "white")) +
-    ggplot2::scale_fill_gradient(low = "#eef3fa", high = "#08306b") +
+    ggplot2::scale_fill_gradient(low = "#eef3fa", high = "#08306b", labels = pct_label) +
     ggplot2::ggtitle(title) +
     ggplot2::xlab("") +
     ggplot2::ylab("") +
-    ggplot2::labs(fill = "Unique\nPeople") +
+    ggplot2::labs(fill = "Unique\nPeople (%)") +
     ggplot2::theme_minimal() +
     ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1), panel.grid = ggplot2::element_blank())
 }

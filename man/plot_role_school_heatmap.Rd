@@ -18,9 +18,10 @@ given) `fis_year_` columns}
 a ggplot object
 }
 \description{
-Each cell is the number of unique people with that role and school (blank
-cells are 0), from [role_school_counts()]. Schools with the most people are
-on the left, and roles are in their factor order from the top.
+Each cell is the number of unique people with that role and school, and
+their percentage of all unique people in `df` (that year), e.g. "97 (19%)";
+blank cells are 0. Counts come from [role_school_counts()]. Schools with the
+most people are on the left, and roles are in their factor order from the top.
 }
 \seealso{
 [role_school_counts()]
