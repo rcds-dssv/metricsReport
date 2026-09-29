@@ -25,12 +25,11 @@ For a given fiscal year, computes the count and percentage falling into each
 level of `col`, counting either unique people or raw records.
 }
 \details{
-With `count = "people"` the data are first reduced to distinct
-`(fis_year_, person_id, col)` rows, so each person is counted once per year.
-Note that `col` has to stay in that key -- it is the column being broken
-down, so each person needs a value for it -- which means anyone with two
-different recorded values in the same year (e.g. a role change mid-year)
-contributes to both levels. With `count = "records"` no de-duplication is
-done and every row is counted, so people who use a service repeatedly are
-weighted by how often they used it.
+With `count = "people"` each person is counted once per year, with the
+value of `col` from their most recent row that year (see
+[latest_per_person()]), so someone whose role changed mid-year counts once,
+in their latest role, and the percentages sum to 100%. With
+`count = "records"` no de-duplication is done and every row is counted, with
+its own value, so people who use a service repeatedly are weighted by how
+often they used it.
 }

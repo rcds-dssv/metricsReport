@@ -17,8 +17,8 @@ a data frame with `role`, `school`, and `n` (unique people)
 }
 \description{
 Counts unique people (`person_id`) in each role and school combination, in
-one fiscal year or over all rows. A person with two different recorded roles
-or schools appears in more than one combination.
+one fiscal year or over all rows. Each person counts once, with their most
+recent role and school (see [latest_per_person()]).
 }
 \seealso{
 [role_school_cell()], [plot_role_school_heatmap()]

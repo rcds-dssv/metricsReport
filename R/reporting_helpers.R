@@ -242,19 +242,39 @@ summarize_returning_clients <- function(df) {
     flextable::autofit()
 }
 
+#' Keep Each Person's Most Recent Row
+#'
+#' Keeps one row per group (e.g. per person per fiscal year): the most recent,
+#' ordered by `date_` and then by `tp_seq_` (the order of touch-points in the
+#' combined data), when those columns are present. Used so that each person has
+#' a single role and school in a year, their latest recorded one.
+#'
+#' @param df a data frame
+#' @param by the grouping columns, as strings (e.g. `c("fis_year_", "person_id")`)
+#'
+#' @return `df` with one row per group
+#' @export
+latest_per_person <- function(df, by) {
+  order_cols <- intersect(c("date_", "tp_seq_"), names(df))
+  df %>%
+    dplyr::arrange(dplyr::across(dplyr::all_of(order_cols))) %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(by))) %>%
+    dplyr::slice_tail(n = 1) %>%
+    dplyr::ungroup()
+}
+
 #' Compute the Breakdown of a Categorical Column for a Given Fiscal Year
 #'
 #' For a given fiscal year, computes the count and percentage falling into each
 #' level of `col`, counting either unique people or raw records.
 #'
-#' With `count = "people"` the data are first reduced to distinct
-#' `(fis_year_, person_id, col)` rows, so each person is counted once per year.
-#' Note that `col` has to stay in that key -- it is the column being broken
-#' down, so each person needs a value for it -- which means anyone with two
-#' different recorded values in the same year (e.g. a role change mid-year)
-#' contributes to both levels. With `count = "records"` no de-duplication is
-#' done and every row is counted, so people who use a service repeatedly are
-#' weighted by how often they used it.
+#' With `count = "people"` each person is counted once per year, with the
+#' value of `col` from their most recent row that year (see
+#' [latest_per_person()]), so someone whose role changed mid-year counts once,
+#' in their latest role, and the percentages sum to 100%. With
+#' `count = "records"` no de-duplication is done and every row is counted, with
+#' its own value, so people who use a service repeatedly are weighted by how
+#' often they used it.
 #'
 #' @param input_df a data frame containing at least the columns `fis_year_`,
 #'   `person_id`, and `col`
@@ -269,12 +289,13 @@ summarize_returning_clients <- function(df) {
 get_df_breakdown <- function(input_df, year, col, count = c("people", "records")) {
   count <- match.arg(count)
 
+  if (count == "people") {
+    # one row per person per year: their most recent value of `col`
+    input_df <- latest_per_person(input_df, c("fis_year_", "person_id"))
+  }
+
   d <- input_df %>%
     dplyr::select(.data[["fis_year_"]], .data[["person_id"]], dplyr::all_of(col))
-
-  if (count == "people") {
-    d <- dplyr::distinct(d)
-  }
 
   d %>%
     dplyr::group_by(.data[["fis_year_"]], !!rlang::sym(col)) %>%
@@ -599,8 +620,8 @@ time_of_day <- function(df, col) {
 #' Count Unique People by Role and School
 #'
 #' Counts unique people (`person_id`) in each role and school combination, in
-#' one fiscal year or over all rows. A person with two different recorded roles
-#' or schools appears in more than one combination.
+#' one fiscal year or over all rows. Each person counts once, with their most
+#' recent role and school (see [latest_per_person()]).
 #'
 #' @param df a data frame with `person_id`, `role`, `school`, and (if `year` is
 #'   given) `fis_year_` columns
@@ -613,7 +634,7 @@ role_school_counts <- function(df, year = NULL) {
   # !! uses the `year` argument, even if the data has its own `year` column (e.g. BYOD)
   if (!is.null(year)) df <- df %>% dplyr::filter(.data[["fis_year_"]] == !!year)
   df %>%
-    dplyr::distinct(.data[["person_id"]], .data[["role"]], .data[["school"]]) %>%
+    latest_per_person("person_id") %>%
     dplyr::count(.data[["role"]], .data[["school"]])
 }
 
