@@ -105,8 +105,9 @@ myflextablefitter_if_pdf <- function(ft, ...) {
 #' * role becomes a factor with levels `role_order`
 #' * "NW Medicine", "Lurie Childrens", and "SRA Lab" are combined into
 #'   "Medical Affiliates"
-#' * "Communication", "Bienen", "Medill", and "SESP" are combined into
-#'   "Comm/Bien/Medi/SESP"
+#' * "Communication" and "Medill" are combined into "Communication/Medill"
+#' * "Bienen", "Law", "NU-Q", and "TGS" (each small) are combined into
+#'   "Bienen/Law/NU-Q/TGS"
 #'
 #' @param df a data frame containing at least the columns `role` and `school`
 #' @param role_order the role factor levels, in display order. Any role not
@@ -133,7 +134,8 @@ recode_role_school <- function(df,
       school = ifelse(is.na(.data[["school"]]) | stringr::str_trim(.data[["school"]]) == "", "Other", .data[["school"]]),
       school = dplyr::case_when(
         .data[["school"]] %in% c("NW Medicine", "Lurie Childrens", "SRA Lab") ~ "Medical Affiliates",
-        .data[["school"]] %in% c("Communication", "Bienen", "Medill", "SESP") ~ "Comm/Bien/Medi/SESP",
+        .data[["school"]] %in% c("Communication", "Medill") ~ "Communication/Medill",
+        .data[["school"]] %in% c("Bienen", "Law", "NU-Q", "TGS") ~ "Bienen/Law/NU-Q/TGS",
         TRUE ~ .data[["school"]]
       ),
       school = factor(.data[["school"]])
