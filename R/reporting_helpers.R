@@ -450,10 +450,16 @@ make_df_time_plot <- function(input_df, year_array, col, count = c("people", "re
     dplyr::mutate(year = as.integer(.data[["year"]]))
 
   col_sym <- rlang::sym(col)
-  p <- ggplot2::ggplot(df_long, ggplot2::aes(x = .data[["year"]], y = .data[["pct"]], group = !!col_sym, color = !!col_sym)) +
+  # a different point shape for each group as well as a different color, so the lines can be told apart
+  # without color (e.g., printed in black and white); enough shapes for up to 15 groups
+  n_groups <- dplyr::n_distinct(df_long[[col]])
+  shapes <- c(16, 17, 15, 18, 3, 4, 8, 1, 2, 0, 5, 6, 7, 9, 10)[seq_len(min(n_groups, 15))]
+  p <- ggplot2::ggplot(df_long, ggplot2::aes(x = .data[["year"]], y = .data[["pct"]], group = !!col_sym,
+                                             color = !!col_sym, shape = !!col_sym)) +
     ggplot2::geom_line(linewidth = 1) +
-    ggplot2::geom_point(size = 2) +
-    ggplot2::labs(x = "Fiscal Year", y = "Percentage", color = col) +
+    ggplot2::geom_point(size = 2.5) +
+    ggplot2::scale_shape_manual(values = shapes) +
+    ggplot2::labs(x = "Fiscal Year", y = "Percentage", color = col, shape = col) +
     ggplot2::theme_minimal()
 
   # pct is already on a 0-100 scale (see get_df_breakdown_tbl())
