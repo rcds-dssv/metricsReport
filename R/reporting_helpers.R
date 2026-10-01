@@ -471,53 +471,43 @@ make_df_time_plot <- function(input_df, year_array, col, count = c("people", "re
   p
 }
 
-#' Categorize a Month Number into an Academic Quarter
+#' Convert a Month to a Fiscal or Academic Quarter
 #'
-#' Maps a numeric month (1-12) to the academic quarter used throughout this
-#' package's fiscal-year conventions (the fiscal/academic year starts in
-#' September; see [add_year_info()]).
+#' Not used in the FY26 report, which works with months instead; this is here
+#' to reproduce earlier results that were grouped by quarter. Both versions
+#' start the year in September, at the start of the fiscal year (see
+#' [add_year_info()]).
 #'
-#' @param m a numeric vector of month numbers (1-12)
+#' * `"fiscal"`: four 3-month quarters, `"Q1"` = Sept. - Nov., `"Q2"` = Dec. -
+#'   Feb., `"Q3"` = Mar. - May, `"Q4"` = June - Aug.
+#' * `"academic"`: `"Fall"` = Sept. - Dec., `"Winter"` = Jan. - Mar.,
+#'   `"Spring"` = Apr. - June, `"Summer"` = July - Aug. These approximate
+#'   Northwestern's academic quarters, so they are not all the same length
+#'   (Fall is 4 months and Summer is 2).
 #'
-#' @return a character vector of quarter names: "Fall", "Winter", "Spring", or "Summer"
+#' @param m a numeric vector of month numbers (1-12), e.g. from
+#'   `lubridate::month(date)`
+#' @param type `"fiscal"` (the default) or `"academic"`
+#'
+#' @return a factor of quarter names, with levels in fiscal-year order
+#' @examples
+#' month_to_quarter(c(9, 12, 3, 6))
+#' month_to_quarter(c(9, 12, 3, 6), type = "academic")
 #' @export
-quarter_from_month <- function(m) {
-  dplyr::case_when(
-    m %in% 9:12 ~ "Fall",
-    m %in% 1:3  ~ "Winter",
-    m %in% 4:6  ~ "Spring",
-    m %in% 7:8  ~ "Summer"
-  )
-}
-
-#' Combine Workshop and Consult Record Counts by Academic Quarter
-#'
-#' Tags each workshop record (by its `start_date`) and each consult record (by
-#' its `created` date) with an academic quarter via [quarter_from_month()],
-#' then counts records per service and quarter -- useful for comparing team
-#' "load" across the year.
-#'
-#' @param ws_df a workshop data frame containing a `start_date` column
-#' @param consult_df a consult data frame containing a `created` column
-#'
-#' @return a data frame with columns `service_`, `quarter_string`, and `n`
-#' @importFrom rlang .data
-#' @export
-get_quarterly_load <- function(ws_df, consult_df) {
-  dplyr::bind_rows(
-    ws_df %>%
-      dplyr::mutate(
-        quarter_string = quarter_from_month(lubridate::month(.data[["start_date"]])),
-        service_ = "Workshop"
-      ),
-    consult_df %>%
-      dplyr::mutate(
-        quarter_string = quarter_from_month(lubridate::month(.data[["created"]])),
-        service_ = "Consult"
-      )
-  ) %>%
-    dplyr::mutate(quarter_string = factor(.data[["quarter_string"]], levels = c("Fall", "Winter", "Spring", "Summer"))) %>%
-    dplyr::count(.data[["service_"]], .data[["quarter_string"]], name = "n")
+month_to_quarter <- function(m, type = c("fiscal", "academic")) {
+  type <- match.arg(type)
+  if (type == "fiscal") {
+    # months since the start of the fiscal year (Sept. = 0), in blocks of 3
+    q <- ((m - 9) %% 12) %/% 3 + 1
+    factor(paste0("Q", q), levels = paste0("Q", 1:4))
+  } else {
+    factor(dplyr::case_when(
+      m %in% 9:12 ~ "Fall",
+      m %in% 1:3  ~ "Winter",
+      m %in% 4:6  ~ "Spring",
+      m %in% 7:8  ~ "Summer"
+    ), levels = c("Fall", "Winter", "Spring", "Summer"))
+  }
 }
 
 #' Render a Sankey Diagram, Falling Back to a Static Image for PDF Output

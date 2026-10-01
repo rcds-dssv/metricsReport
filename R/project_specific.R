@@ -8,14 +8,13 @@
 #' actual start date, estimated start date, September 1 of the `fy_start`
 #' fiscal year, and the SharePoint creation date. `start_date_source` records
 #' which one was used (`"actual"`, `"estimated"`, `"fiscal_year"`, or
-#' `"created"`). Calendar quarters are only meaningful for `"actual"` and
+#' `"created"`). Calendar dates (e.g. `cal_month_`) are only meaningful for `"actual"` and
 #' `"estimated"`; fiscal years are meaningful for all but `"created"`.
 #'
 #' @param con a connection to the metrics database, e.g. from [get_metrics_db_conn()]
 #'
 #' @return a data frame with one row per project, including `date_`,
-#'   `cal_year_`, `cal_month_`, `cal_day_`, `cal_quarter_`, `fis_year_`,
-#'   `fis_quarter_`, and `quarter_name_`
+#'   `cal_year_`, `cal_month_`, `cal_day_`, and `fis_year_`
 #' @seealso [read_workshop_data()], [read_consult_data()], [read_byod_data()]
 #' @export
 read_project_data <- function(con) {

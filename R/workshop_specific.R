@@ -11,8 +11,7 @@
 #' @param con a connection to the metrics database, e.g. from [get_metrics_db_conn()]
 #'
 #' @return a data frame with one row per workshop, including `date_`,
-#'   `cal_year_`, `cal_month_`, `cal_day_`, `cal_quarter_`, `fis_year_`,
-#'   `fis_quarter_`, and `quarter_name_`
+#'   `cal_year_`, `cal_month_`, `cal_day_`, and `fis_year_`
 #' @seealso [read_workshop_registration_data()], [read_consult_data()],
 #'   [read_byod_data()], [read_project_data()]
 #' @export
@@ -37,8 +36,7 @@ read_workshop_data <- function(con) {
       ai, bash, bio_genomics, cloud, data_management, ern, gis,
       git, globus, gpu, julia, matlab, python, quest, r, sql, statistics,
       visualization, subtopic_other, subtopic_other_text,
-      date_, cal_year_, cal_month_, cal_day_, cal_quarter_, fis_year_, fis_quarter_,
-      quarter_name_
+      date_, cal_year_, cal_month_, cal_day_, fis_year_
     )
 }
 
@@ -75,7 +73,7 @@ read_workshop_registration_data <- function(con, workshop_ids = NULL) {
 #' @export
 summarise_workshops_missing <- function(d) {
   columns_to_select <- c(
-    "id", "smartsheet_rid", "series", "name", "quarter_name_", "start_date",
+    "id", "smartsheet_rid", "series", "name", "start_date",
     "registration", "attendance", "hours"
   )
 
@@ -254,13 +252,6 @@ set_topic <- function(d, topic_categories, category_order = NULL, blank_category
 
 #' @importFrom rlang .data
 #' @export
-group_by_quarter <- function(d) {
-  d %>%
-    dplyr::group_by(.data[["quarter_name_"]], .add = TRUE)
-}
-
-#' @importFrom rlang .data
-#' @export
 group_by_team <- function(d) {
 
   d %>%
@@ -279,9 +270,6 @@ group_data_by <- function(d, by) {
     return(d)
   }
 
-  if (stringr::str_detect(by, "quarter")) {
-    d <- group_by_quarter(d)
-  }
   if (stringr::str_detect(by, "team")) {
     d <- group_by_team(d)
   }
@@ -296,17 +284,12 @@ group_data_by <- function(d, by) {
 summarise_workshops_metrics <- function(
     d,
     grouping_variable = NULL,
-    group_by_quarter = TRUE,
     group_by_team = TRUE,
     remove_library = TRUE
   ) {
 
   if (remove_library) {
     d <- d %>% drop_library()
-  }
-
-  if (group_by_quarter) {
-    d <- group_by_quarter(d)
   }
 
   if (group_by_team) {
@@ -331,7 +314,6 @@ summarise_workshops_metrics <- function(
 #' @export
 summarise_statistical_workshops_metrics <- function(
     d,
-    group_by_quarter = TRUE,
     group_by_team = TRUE
   ) {
 
@@ -340,7 +322,6 @@ summarise_statistical_workshops_metrics <- function(
   summarise_workshops_metrics(
     d,
     grouping_variable = statistics,
-    group_by_quarter = group_by_quarter,
     group_by_team = group_by_team,
     remove_library = TRUE
   )

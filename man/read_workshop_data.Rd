@@ -11,8 +11,7 @@ read_workshop_data(con)
 }
 \value{
 a data frame with one row per workshop, including `date_`,
-  `cal_year_`, `cal_month_`, `cal_day_`, `cal_quarter_`, `fis_year_`,
-  `fis_quarter_`, and `quarter_name_`
+  `cal_year_`, `cal_month_`, `cal_day_`, and `fis_year_`
 }
 \description{
 Reads the `workshop` table from the metrics database and adds calendar and

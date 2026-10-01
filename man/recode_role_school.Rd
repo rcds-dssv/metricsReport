@@ -30,6 +30,7 @@ identical categories:
 * role becomes a factor with levels `role_order`
 * "NW Medicine", "Lurie Childrens", and "SRA Lab" are combined into
   "Medical Affiliates"
-* "Communication", "Bienen", "Medill", and "SESP" are combined into
-  "Comm/Bien/Medi/SESP"
+* "Communication" and "Medill" are combined into "Communication/Medill"
+* "Bienen", "Law", "NU-Q", and "TGS" (each small) are combined into
+  "Bienen/Law/NU-Q/TGS"
 }
