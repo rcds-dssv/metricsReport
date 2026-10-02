@@ -30,5 +30,6 @@ day). `response_time` is the number of days
 from the request to the first response.
 }
 \seealso{
-[read_workshop_data()], [read_byod_data()], [read_project_data()]
+[read_workshop_data()], [read_byod_data()], [read_project_data()],
+  [read_consult_survey_data()]
 }
