@@ -115,3 +115,28 @@ combine_cols <- function(d, grouped_colname, colnames) {
 
 
 
+
+#' Read a Metrics CSV File
+#'
+#' Reads one of the static csv files written by
+#' `grab_metrics_files_from_database.Rmd` (e.g. `workshops.csv`). By default
+#' `readr::read_csv()` guesses each column's type from the first 1,000 rows, so
+#' a column that is empty in those rows can be read as the wrong type and its
+#' later values silently dropped. This uses the whole file to guess
+#' (`guess_max = Inf`), and stops with an error if there are any parsing
+#' problems.
+#'
+#' @param file the file name, e.g. `"workshops.csv"`
+#' @param data_dir the folder the file is in
+#' @param ... other arguments passed on to [readr::read_csv()], e.g. `col_types`
+#'
+#' @return a tibble
+#' @export
+read_metrics_csv <- function(file, data_dir, ...) {
+  d <- readr::read_csv(file.path(data_dir, file), guess_max = Inf, show_col_types = FALSE, ...)
+  if (nrow(readr::problems(d)) > 0) {
+    print(readr::problems(d))
+    stop("Parsing problems in ", file, " (see above)")
+  }
+  d
+}

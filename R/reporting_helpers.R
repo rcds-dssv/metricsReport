@@ -187,6 +187,90 @@ summarize_year_pair <- function(year_pair, df) {
     dplyr::select("year_pair", dplyr::everything())
 }
 
+#' Count Clients Who Also Appear in Any Earlier Fiscal Year
+#'
+#' For each fiscal year, counts the unique people (`person_id`) in `df` that
+#' year, and how many of them also appear in `df` in any earlier fiscal year in
+#' `years`. Unlike [summarize_year_pair()], the earlier appearance can be in any
+#' earlier year, not only the year before; and unlike
+#' [summarize_returning_clients()], using a service more than once within a
+#' year does not count. Use it with one service's records (e.g. workshop
+#' registrations or consults) to count people who came back to that service.
+#'
+#' @param df a data frame with one row per record, containing at least the
+#'   columns `fis_year_` and `person_id` (records with no `person_id` are left
+#'   out)
+#' @param years the fiscal years to include, e.g. `2020:2026`; records in other
+#'   years are left out, so "earlier" means earlier within these years
+#'
+#' @return a data frame with one row per fiscal year in `years` that has
+#'   records: `fis_year_`, `n_people` (unique people that year), `n_returning`
+#'   (how many of them appear in an earlier year), and `pct_returning` (0-100,
+#'   unrounded). The first year has no earlier year, so its `n_returning` is 0.
+#' @importFrom rlang .data
+#' @export
+summarize_returning_any_year <- function(df, years) {
+  df %>%
+    dplyr::mutate(year_num = as.integer(as.character(.data[["fis_year_"]]))) %>%
+    dplyr::filter(.data[["year_num"]] %in% years, !is.na(.data[["person_id"]])) %>%
+    dplyr::distinct(.data[["person_id"]], .data[["year_num"]]) %>%
+    # the first year each person appears
+    dplyr::group_by(.data[["person_id"]]) %>%
+    dplyr::mutate(first_year = min(.data[["year_num"]])) %>%
+    dplyr::group_by(.data[["year_num"]]) %>%
+    dplyr::summarise(
+      n_people = dplyr::n(),
+      n_returning = sum(.data[["first_year"]] < .data[["year_num"]]),
+      .groups = "drop"
+    ) %>%
+    dplyr::mutate(pct_returning = 100 * .data[["n_returning"]] / .data[["n_people"]]) %>%
+    dplyr::rename(fis_year_ = "year_num")
+}
+
+#' Bar Charts by Fiscal Year, One Panel per Measure
+#'
+#' Bar charts of one or more measures by fiscal year (x-axis labeled "FY20",
+#' "FY21", ...), one panel per measure, each with its own y-axis and with each
+#' bar's value written above it. Every fiscal year from the first to the last
+#' in `d` is on the x-axis, so a year with no data shows as a gap.
+#'
+#' @param d a data frame with one row per fiscal year and measure, with columns
+#'   `fis_year_`, `measure` (the panel title; panels are in the order they
+#'   first appear), `value`, and `label` (the text above the bar)
+#' @param title the plot title
+#' @param fill the bar color
+#' @param ncol the number of columns of panels (1 stacks them, sharing the
+#'   x-axis)
+#'
+#' @return a ggplot object
+#' @examples
+#' d <- data.frame(fis_year_ = rep(2024:2026, 2),
+#'                 measure = rep(c("Count", "% of All"), each = 3),
+#'                 value = c(5, 8, 12, 10, 15, 20))
+#' d$label <- ifelse(d$measure == "Count", d$value, paste0(d$value, "%"))
+#' plot_year_bars(d, "Example")
+#' @importFrom rlang .data
+#' @export
+plot_year_bars <- function(d, title, fill = "grey35", ncol = 1) {
+  years <- as.integer(as.character(d$fis_year_))
+  year_levels <- paste0("FY", stringr::str_sub(seq(min(years), max(years)), 3))
+  d %>%
+    dplyr::mutate(
+      measure = forcats::fct_inorder(as.character(.data[["measure"]])),
+      year_label = factor(paste0("FY", stringr::str_sub(years, 3)), levels = year_levels)
+    ) %>%
+    ggplot2::ggplot(ggplot2::aes(x = .data[["year_label"]], y = .data[["value"]])) +
+    ggplot2::geom_col(fill = fill) +
+    ggplot2::geom_text(ggplot2::aes(label = .data[["label"]]), vjust = -0.3, size = 3) +
+    # each measure gets its own y-axis, with room above the bars for the labels
+    ggplot2::facet_wrap(~measure, ncol = ncol, scales = "free_y") +
+    ggplot2::scale_x_discrete(drop = FALSE) +
+    ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.12))) +
+    ggplot2::ggtitle(title) +
+    ggplot2::xlab("Fiscal Year") +
+    ggplot2::ylab("")
+}
+
 #' Summarize the Percentage of Returning Clients per Year
 #'
 #' Creates a flextable summarizing, for each fiscal year, the number of unique
@@ -594,6 +678,35 @@ fy_first_day <- function(fy) as.Date(paste0(fy - 1, "-09-01"))
 #' @rdname fiscal_year_helpers
 #' @export
 fy_last_day <- function(fy) as.Date(paste0(fy, "-08-31"))
+
+#' Month of the Fiscal Year
+#'
+#' `month_of_fy()` gives the position of a date's month within the fiscal year
+#' it counts toward: 1 = the September that starts the fiscal year, ...,
+#' 12 = August, and 13 = the September after it. 13 is for records dated after
+#' the fiscal year ends but counted in it, e.g. early-September workshops, before
+#' the fall quarter starts, that count toward the previous fiscal year.
+#' `fy_month_labels()` gives the matching labels: "Sep", ..., "Aug",
+#' "Sep (next)".
+#'
+#' @param date a vector of dates
+#' @param fis_year the fiscal year each date counts toward (numeric, or a
+#'   factor or character of years)
+#'
+#' @return `month_of_fy()`: a numeric vector (1-13). `fy_month_labels()`: a
+#'   character vector of 13 labels, so `fy_month_labels()[month_of_fy(...)]` is
+#'   each date's label.
+#' @examples
+#' month_of_fy(as.Date(c("2025-09-20", "2026-03-01", "2026-09-10")), 2026)
+#' fy_month_labels()
+#' @export
+month_of_fy <- function(date, fis_year) {
+  (lubridate::month(date) - 9) %% 12 + 1 + 12 * (date > fy_last_day(as.integer(as.character(fis_year))))
+}
+
+#' @rdname month_of_fy
+#' @export
+fy_month_labels <- function() c(month.abb[c(9:12, 1:8)], "Sep (next)")
 
 #' Get the Time of Day from a Date-Time Column
 #'
