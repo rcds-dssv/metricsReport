@@ -33,5 +33,7 @@ a flextable object
 For each year in `year_array`, computes the breakdown of `col` (via
 [get_df_breakdown_tbl()]) and arranges the results side by side as a
 flextable, with a merged two-row header showing "n" and "pct" for each
-year.
+year. Rows are sorted by the most recent year (the last in `year_array`),
+largest first, with ties (e.g. values not seen that year) sorted by their
+total over all the years.
 }

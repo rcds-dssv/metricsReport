@@ -456,7 +456,9 @@ get_df_breakdown_tbl <- function(input_df, year, col, count = c("people", "recor
 #' For each year in `year_array`, computes the breakdown of `col` (via
 #' [get_df_breakdown_tbl()]) and arranges the results side by side as a
 #' flextable, with a merged two-row header showing "n" and "pct" for each
-#' year.
+#' year. Rows are sorted by the most recent year (the last in `year_array`),
+#' largest first, with ties (e.g. values not seen that year) sorted by their
+#' total over all the years.
 #'
 #' @inheritParams get_df_breakdown
 #' @param year_array a vector of fiscal years to include as columns
@@ -480,6 +482,14 @@ make_df_time_table <- function(input_df, year_array, col, count = c("people", "r
       values_fill = 0
     ) %>%
     dplyr::select(dplyr::all_of(col), dplyr::all_of(paste0(rep(year_array, each = 2), "_", c("n", "pct"))))
+
+  # sort by the most recent year, then by the total over all years
+  n_cols <- paste0(year_array, "_n")
+  foo <- foo %>%
+    dplyr::arrange(
+      dplyr::desc(.data[[n_cols[length(n_cols)]]]),
+      dplyr::desc(rowSums(dplyr::pick(dplyr::all_of(n_cols))))
+    )
 
   if (show_percent_symbol) {
     foo <- foo %>% dplyr::mutate(dplyr::across(dplyr::ends_with("_pct"), ~ paste0(.x, "%")))
