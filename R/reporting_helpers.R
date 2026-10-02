@@ -597,11 +597,18 @@ fy_last_day <- function(fy) as.Date(paste0(fy, "-08-31"))
 
 #' Get the Time of Day from a Date-Time Column
 #'
-#' Returns the time of day (`"HH:MM:SS"`) from a date-time column of a data
-#' frame read from the metrics csv files (e.g. `start_datetime` in
-#' `workshops.csv` or `created_datetime` in `consults.csv`, which hold Chicago
-#' clock times). `readr::read_csv()` may read these as date-times labeled UTC
-#' (while holding the Chicago clock time) or as text, so both are handled.
+#' Returns the Chicago time of day (`"HH:MM:SS"`) from a date-time column of a
+#' data frame read from the metrics csv files (e.g. `start_datetime` in
+#' `workshops.csv` or `created_datetime` in `consults.csv`).
+#'
+#' * Text columns: the csv files hold Chicago clock times, either as ISO 8601
+#'   with the UTC offset (`"2026-09-30T14:22:34-05:00"`) or, in files made
+#'   before Oct. 2026, without it (`"2026-09-30 14:22:34"`). Both have the time
+#'   at the same place in the string, so read these columns as text (e.g.
+#'   `col_types = readr::cols(start_datetime = "c")`) to use either kind of file.
+#' * Date-time (`POSIXct`) columns are converted to Chicago time. This is right
+#'   for the newer files (`readr::read_csv()` reads the offset), but not for the
+#'   older files without an offset, which `read_csv()` reads as UTC.
 #'
 #' @param df a data frame
 #' @param col name of the date-time column, as a string
@@ -612,7 +619,7 @@ fy_last_day <- function(fy) as.Date(paste0(fy, "-08-31"))
 time_of_day <- function(df, col) {
   if (!col %in% names(df)) return(NA_character_)
   x <- df[[col]]
-  if (inherits(x, "POSIXct")) format(x, "%H:%M:%S", tz = "UTC") else stringr::str_sub(as.character(x), 12, 19)
+  if (inherits(x, "POSIXct")) format(x, "%H:%M:%S", tz = "America/Chicago") else stringr::str_sub(as.character(x), 12, 19)
 }
 
 #' Count Unique People by Role and School

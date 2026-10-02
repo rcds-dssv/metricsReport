@@ -53,10 +53,15 @@ join_person_info <- function(d, con) {
     )
 }
 
-# Format a date-time as a "YYYY-MM-DD HH:MM:SS" string in Chicago time (NA stays NA),
-# so it is written to csv files as the local clock time.
+# Format a date-time as an ISO 8601 string in Chicago time with its UTC offset, e.g.
+# "2026-09-30T14:22:34-05:00" (-05:00 in daylight saving time, -06:00 otherwise; NA stays NA). The string
+# shows the Chicago clock time, and the offset makes the moment unambiguous: readr::read_csv(),
+# lubridate::ymd_hms(), and Python's datetime.fromisoformat() and pandas.to_datetime() all read it as the
+# right time.
 format_chicago_datetime <- function(x) {
-  out <- format(lubridate::with_tz(x, "America/Chicago"), "%Y-%m-%d %H:%M:%S")
+  out <- format(lubridate::with_tz(x, "America/Chicago"), "%Y-%m-%dT%H:%M:%S%z")
+  # %z gives "-0500"; ISO 8601 (and Python before 3.11) wants "-05:00"
+  out <- sub("([+-][0-9]{2})([0-9]{2})$", "\\1:\\2", out)
   out[is.na(x)] <- NA_character_
   out
 }

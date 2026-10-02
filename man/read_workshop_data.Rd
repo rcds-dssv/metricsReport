@@ -19,7 +19,8 @@ fiscal year columns with [add_year_info()], using `start_date`.
 }
 \details{
 `start_datetime` is the workshop's start date and time from Eventbrite,
-returned as a `"YYYY-MM-DD HH:MM:SS"` string in Chicago time. It is only
+returned as an ISO 8601 string in Chicago time with its UTC offset, e.g.
+`"2026-09-30T14:22:34-05:00"`. It is only
 filled in for single-day workshops (`NA` for multi-day workshops, Eventbrite
 series, and workshops without an Eventbrite event).
 }

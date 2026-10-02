@@ -16,9 +16,17 @@ a character vector of times of day, or `NA` if `col` is not in `df`
   (e.g. in csv files made before the column was added)
 }
 \description{
-Returns the time of day (`"HH:MM:SS"`) from a date-time column of a data
-frame read from the metrics csv files (e.g. `start_datetime` in
-`workshops.csv` or `created_datetime` in `consults.csv`, which hold Chicago
-clock times). `readr::read_csv()` may read these as date-times labeled UTC
-(while holding the Chicago clock time) or as text, so both are handled.
+Returns the Chicago time of day (`"HH:MM:SS"`) from a date-time column of a
+data frame read from the metrics csv files (e.g. `start_datetime` in
+`workshops.csv` or `created_datetime` in `consults.csv`).
+}
+\details{
+* Text columns: the csv files hold Chicago clock times, either as ISO 8601
+  with the UTC offset (`"2026-09-30T14:22:34-05:00"`) or, in files made
+  before Oct. 2026, without it (`"2026-09-30 14:22:34"`). Both have the time
+  at the same place in the string, so read these columns as text (e.g.
+  `col_types = readr::cols(start_datetime = "c")`) to use either kind of file.
+* Date-time (`POSIXct`) columns are converted to Chicago time. This is right
+  for the newer files (`readr::read_csv()` reads the offset), but not for the
+  older files without an offset, which `read_csv()` reads as UTC.
 }

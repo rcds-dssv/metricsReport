@@ -23,9 +23,10 @@ calendar and fiscal year columns with [add_year_info()], using `created`.
 time (so a request submitted in the evening is not dated the next day in UTC).
 Some consults have a `response_date` earlier than the date they were created;
 for these, `created` is set to `response_date`. `created_datetime` keeps the
-time the request was submitted, as a `"YYYY-MM-DD HH:MM:SS"` string in Chicago
-time (`NA` when `created` was replaced by `response_date`, since the time
-would then belong to a different day). `response_time` is the number of days
+time the request was submitted, as an ISO 8601 string in Chicago time with its
+UTC offset, e.g. `"2026-09-30T14:22:34-05:00"` (`NA` when `created` was
+replaced by `response_date`, since the time would then belong to a different
+day). `response_time` is the number of days
 from the request to the first response.
 }
 \seealso{
