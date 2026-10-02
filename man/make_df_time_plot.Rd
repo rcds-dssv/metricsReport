@@ -32,5 +32,7 @@ a ggplot object
 }
 \description{
 Builds on [make_df_time_table()] and reshapes the result into a line plot
-of percentage over fiscal year, one line per level of `col`.
+of percentage over fiscal year, one line per level of `col`. The legend is
+in the same order as the table: by the most recent year (the last in
+`year_array`), largest at the top.
 }

@@ -519,7 +519,9 @@ make_df_time_table <- function(input_df, year_array, col, count = c("people", "r
 #' Plot a Column's Breakdown Over Time
 #'
 #' Builds on [make_df_time_table()] and reshapes the result into a line plot
-#' of percentage over fiscal year, one line per level of `col`.
+#' of percentage over fiscal year, one line per level of `col`. The legend is
+#' in the same order as the table: by the most recent year (the last in
+#' `year_array`), largest at the top.
 #'
 #' @inheritParams make_df_time_table
 #' @param show_percent_symbol if `TRUE` (the default), append "%" to the
@@ -544,6 +546,8 @@ make_df_time_plot <- function(input_df, year_array, col, count = c("people", "re
       values_to = "pct"
     ) %>%
     dplyr::mutate(year = as.integer(.data[["year"]]))
+  # order the legend (and the colors and shapes) like the table: by the most recent year, largest first
+  df_long[[col]] <- factor(as.character(df_long[[col]]), levels = unique(as.character(df_wide[[col]])))
 
   col_sym <- rlang::sym(col)
   # a different point shape for each group as well as a different color, so the lines can be told apart
