@@ -15,13 +15,16 @@ given) `fis_year_` columns}
 \item{role_name, school_name}{the role and school of the combination}
 }
 \value{
-a one-row data frame with `n` (unique people) and `pct`
+a one-row data frame with `n` (unique people), `pct`, `check`
+  ("largest", "tied" if another group has the same number of people, or
+  "not largest"), and `largest_group` (the largest group(s) as
+  "role, school", separated by "; " if tied)
 }
 \description{
 Unique people in one role and school combination in a fiscal year, and their
 percentage of all unique people that year. Used for takeaways that describe
-the largest role-and-school group, so it warns if the combination is not the
-largest one.
+the largest role-and-school group, so it also reports whether the combination
+is still the largest one (`check`), for the report to print when it is not.
 }
 \seealso{
 [role_school_counts()]

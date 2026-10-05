@@ -774,21 +774,27 @@ role_school_counts <- function(df, year = NULL) {
 #'
 #' Unique people in one role and school combination in a fiscal year, and their
 #' percentage of all unique people that year. Used for takeaways that describe
-#' the largest role-and-school group, so it warns if the combination is not the
-#' largest one.
+#' the largest role-and-school group, so it also reports whether the combination
+#' is still the largest one (`check`), for the report to print when it is not.
 #'
 #' @inheritParams role_school_counts
 #' @param role_name,school_name the role and school of the combination
 #'
-#' @return a one-row data frame with `n` (unique people) and `pct`
+#' @return a one-row data frame with `n` (unique people), `pct`, `check`
+#'   ("largest", "tied" if another group has the same number of people, or
+#'   "not largest"), and `largest_group` (the largest group(s) as
+#'   "role, school", separated by "; " if tied)
 #' @seealso [role_school_counts()]
 #' @export
 role_school_cell <- function(df, year, role_name, school_name) {
   counts <- role_school_counts(df, year)
   n_cell <- sum(counts$n[counts$role == role_name & counts$school == school_name])
-  if (n_cell < max(counts$n)) warning(school_name, " ", role_name, " is no longer the largest role x school group")
+  n_max <- max(counts$n)
+  top <- counts[counts$n == n_max, ]
+  check <- if (n_cell < n_max) "not largest" else if (nrow(top) > 1) "tied" else "largest"
+  largest_group <- paste(paste(top$role, top$school, sep = ", "), collapse = "; ")
   n_total <- df %>% dplyr::filter(.data[["fis_year_"]] == !!year) %>% dplyr::distinct(.data[["person_id"]]) %>% nrow()
-  dplyr::tibble(n = n_cell, pct = 100 * n_cell / n_total)
+  dplyr::tibble(n = n_cell, pct = 100 * n_cell / n_total, check = check, largest_group = largest_group)
 }
 
 #' Plot a Heatmap of Unique People by Role and School

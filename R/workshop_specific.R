@@ -201,8 +201,10 @@ fill_missing_attendance <- function(d, full_workshop_data) {
 #' @importFrom rlang .data
 #' @export
 drop_library <- function(d) {
+  # %in% keeps rows with a missing (NA) provider; `provider != "Library"` would
+  # drop them, since filter() drops rows where the condition is NA
   d %>%
-    dplyr::filter(.data[["provider"]] != "Library")
+    dplyr::filter(!(.data[["provider"]] %in% "Library"))
 }
 
 #' @importFrom rlang .data
