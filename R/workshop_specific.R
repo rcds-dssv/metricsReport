@@ -33,7 +33,7 @@ read_workshop_data <- function(con) {
       registration, attendance, recording_views, waitlist,
       surveys, recommend, learn,
       campus, event_type,
-      fee, open_registration, status, subtopic,
+      fee, open_registration, commissioned, status, subtopic,
       ai, bash, bio_genomics, cloud, data_management, ern, gis,
       git, globus, gpu, julia, matlab, python, quest, r, sql, statistics,
       visualization, subtopic_other, subtopic_other_text,
