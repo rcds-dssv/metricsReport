@@ -31,7 +31,7 @@ read_workshop_data <- function(con) {
       provider, rcs_taught,
       start_date, start_datetime, hours,
       registration, attendance, recording_views, waitlist,
-      surveys, recommend, learn,
+      surveys, recommend, learn, revenue,
       campus, event_type,
       fee, open_registration, commissioned, status, subtopic,
       ai, bash, bio_genomics, cloud, data_management, ern, gis,
